@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+<!-- Add Mount Plates Link -->
+<link name="arch_link">
+  <visual>
+    <material name="clearpath_black"/>
+    <geometry>
+      <mesh filename="package://mtu32_description/meshes/sensor_arch.stl"/>
+    </geometry>
+  </visual>
+  <collision>
+    <material name="clearpath_black"/>
+    <geometry>
+      <mesh filename="package://mtu32_description/meshes/sensor_arch.stl"/>
+    </geometry>
+  </collision>
+</link>
+
+<!-- Add Mount Plates Joint -->
+<joint name="arch_joint" type="fixed">
+  <child link="arch_link"/>
+  <parent link="base_link"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+</joint>
+
+</robot>
