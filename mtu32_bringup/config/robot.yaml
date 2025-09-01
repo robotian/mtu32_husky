@@ -1,0 +1,115 @@
+serial_number: a300-00036
+version: 0
+system:
+  username: robot
+  hosts:
+    - hostname: cpr-a300-00036
+      ip: 192.168.131.1
+  ros2:
+    namespace: a300_00036
+    domain_id: 0
+    middleware:
+      implementation: rmw_fastrtps_cpp
+      discovery: server
+      servers:
+        - hostname: cpr-a300-00036
+          port: 11811
+          enabled: True
+    workspaces:
+    - "/home/robot/colcon_ws/install/setup.bash"
+platform:
+  battery:
+    model: S_24V20_U1
+    configuration: S1P2
+  can_bridges:
+    - interface: vcan0
+      enable_can_fd: false
+      interval: 0.01
+      use_bus_time: false
+      filters: '0:0'
+      auto_configure: true
+      auto_activate: true
+      topic_rx: vcan0/rx
+      topic_tx: vcan0/tx
+  attachments:
+    - name: front_bumper
+      type: a300.bumper
+      parent: front_bumper_mount
+    - name: rear_bumper
+      type: a300.bumper
+      parent: rear_bumper_mount
+    - name: top_plate
+      type: a300.top_plate
+      model: pacs
+      parent: default_mount
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
+      enabled: true
+    - name: wireless_charger
+      type: a300.wireless_charger
+      model: default
+      parent: base_link
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
+      enabled: true
+  extras:
+    urdf:
+      package: mtu32_description
+      path: urdf/robot_description.urdf.xacro
+mounts:
+  fath_pivot:
+    - parent: top_plate_mount_c1
+      xyz: [0.02, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
+      angle: 0.0
+sensors:
+  imu:
+    - model: microstrain_imu
+      urdf_enabled: true
+      launch_enabled: false
+      parent: base_link
+      xyz: [0.059, 0.0, 0.161275]
+      rpy: [0.0, 0.0, 0.0]
+      ros_parameters:
+        microstrain_inertial_driver:
+          imu_frame_id: imu_0_link
+          port: /dev/microstrain_main
+          use_enu_frame: true
+  gps:
+    - model: swiftnav_duro
+      urdf_enabled: true
+      launch_enabled: true
+      parent: base_link
+      xyz: [-0.27979, -0.21229, 0.46735]
+      rpy: [0.0, 0.0, 0.0]
+      ros_parameters:
+        duro_node:
+          gps_receiver_frame_id: gps_0_link
+          ip_address: 192.168.131.31
+          ip_port: 55555
+          imu_frame_id: gps_0_link
+  camera:
+    - model: stereolabs_zed
+      urdf_enabled: true
+      launch_enabled: true
+      parent: base_link
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
+      ros_parameters:
+        stereolabs_zed:
+          general.grab_frame_rate: 30
+          general.serial_number: 0
+          general.camera_model: 'zed2'
+          general.grab_resolution: 'AUTO'
+manipulators:
+  moveit:
+    enable: true
+  arms:
+    - model: universal_robots
+      parent: top_plate_mount_c2
+      xyz: [0.0, 0.0, 0.0065]
+      rpy: [0.0, 0.0, 0.0]
+      ur_type: ur5e
+      robot_ip: 192.168.131.40
+      headless: false
+

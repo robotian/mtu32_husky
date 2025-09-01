@@ -10,9 +10,9 @@
     </geometry>
   </visual>
   <collision>
-    <material name="clearpath_black"/>
+    <origin xyz="0 0.24 0.24" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://mtu32_description/meshes/sensor_arch.stl"/>
+      <box size="0.17 0.05 0.2"/>
     </geometry>
   </collision>
 </link>
@@ -20,6 +20,29 @@
 <!-- Add Mount Plates Joint -->
 <joint name="arch_joint" type="fixed">
   <child link="arch_link"/>
+  <parent link="base_link"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+</joint>
+
+<!-- Add Duro Base and E-Stop Button Link -->
+<link name="estop_link">
+  <visual>
+    <material name="clearpath_yellow"/>
+    <geometry>
+      <mesh filename="package://mtu32_description/meshes/duro_estop.stl"/>
+    </geometry>
+ </visual>
+  <collision>
+    <origin xyz="-0.28 0 0.37" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.12 0.59 0.24"/>
+    </geometry>
+  </collision>
+</link>
+
+<!-- Add Mount Plates Joint -->
+<joint name="estop_joint" type="fixed">
+  <child link="estop_link"/>
   <parent link="base_link"/>
   <origin xyz="0 0 0" rpy="0 0 0"/>
 </joint>
