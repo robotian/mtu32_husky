@@ -105,11 +105,22 @@ manipulators:
   moveit:
     enable: true
   arms:
-    - model: universal_robots
-      parent: top_plate_mount_c2
-      xyz: [0.0, 0.0, 0.0065]
+    - model: kinova_gen3_7dof
+      parent: default_mount
+      xyz: [0.0, 0.0, 0.0]
       rpy: [0.0, 0.0, 0.0]
-      ur_type: ur5e
-      robot_ip: 192.168.131.40
-      headless: false
-
+      ip: 192.168.131.40
+      port: 10000
+      poses:
+        - name: Ready
+          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        - name: Forward
+          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        - name: Straight
+          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        - name: Stow
+          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      gripper:
+        model: robotiq_2f_85
+        xyz: [0.0, 0.0, 0.0]
+        rpy: [0.0, 0.0, 0.0]
