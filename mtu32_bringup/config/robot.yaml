@@ -21,16 +21,15 @@ platform:
   battery:
     model: S_24V20_U1
     configuration: S1P2
+  can_adapters:
+    - can_dev: usbcan0
+      type: serial
+      serial_dev: /dev/usbcan
+      baud: s5
   can_bridges:
-    - interface: vcan0
-      enable_can_fd: false
-      interval: 0.01
-      use_bus_time: false
-      filters: '0:0'
-      auto_configure: true
-      auto_activate: true
-      topic_rx: vcan0/rx
-      topic_tx: vcan0/tx
+    - interface: usbcan0
+      topic_rx: sensors/charger_0/usbcan0/rx
+      topic_tx: sensors/charger_0/usbcan0/tx
   attachments:
     - name: front_bumper
       type: a300.bumper
@@ -63,6 +62,15 @@ mounts:
       rpy: [0.0, 0.0, 0.0]
       angle: 0.0
 sensors:
+  charger:
+    - model: wiferion
+      urdf_enabled: true
+      launch_enabled: true
+      parent: base_link
+      ros_parameters:
+        wiferion:
+          canbus_dev: usbcan0
+          launch_gateway: false
   imu:
     - model: microstrain_imu
       urdf_enabled: true
