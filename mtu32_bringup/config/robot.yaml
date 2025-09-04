@@ -106,7 +106,7 @@ sensors:
     - model: stereolabs_zed
       urdf_enabled: true
       launch_enabled: true
-      parent: base_link
+      parent: fath_pivot_0_mount
       xyz: [0.0, 0.0, 0.0]
       rpy: [0.0, 0.0, 0.0]
       ros_parameters:
@@ -120,9 +120,9 @@ manipulators:
     enable: true
   arms:
     - model: kinova_gen3_7dof
-      parent: default_mount
-      xyz: [0.0, 0.0, 0.0]
-      rpy: [0.0, 0.0, 0.0]
+      parent: top_plate_mount_e9
+      xyz: [0.0, 0.0, 0.046]
+      rpy: [0.0, 0.0, 3.14159]
       ip: 192.168.131.40
       port: 10000
       poses:
@@ -138,3 +138,4 @@ manipulators:
         model: robotiq_2f_85
         xyz: [0.0, 0.0, 0.0]
         rpy: [0.0, 0.0, 0.0]
+        test: false
