@@ -69,7 +69,9 @@ sensors:
     - model: wiferion
       urdf_enabled: true
       launch_enabled: true
-      parent: base_link
+      parent: wireless_charger_face
+      xyz: [-0.003, 0.0, 0.01]
+      rpy: [0.0, 3.14159, 0.0]
       ros_parameters:
         wiferion:
           canbus_dev: usbcan0
@@ -78,8 +80,8 @@ sensors:
     - model: microstrain_imu
       urdf_enabled: true
       launch_enabled: false
-      parent: base_link
-      xyz: [0.059, 0.0, 0.161275]
+      parent: top_plate_mount_c2
+      xyz: [0.0, 0.0, 0.01]
       rpy: [0.0, 0.0, 0.0]
       ros_parameters:
         microstrain_inertial_driver:
@@ -91,7 +93,7 @@ sensors:
       urdf_enabled: true
       launch_enabled: false
       parent: base_link
-      xyz: [-0.27979, -0.21229, 0.46735]
+      xyz: [0.32479, 0.21329, 0.44735]
       rpy: [0.0, 0.0, 0.0]
       ros_parameters:
         duro_node:
@@ -105,7 +107,7 @@ sensors:
       launch_enabled: true
       parent: base_link
       xyz: [0.0, -0.2875, 0.2775]
-      rpy: [0.0, 0.0, 1.5708]
+      rpy: [0.0, 0.0, -1.5708]
       ros_parameters:
         urg_node:
           laser_frame_id: lidar2d_0_laser
@@ -132,20 +134,20 @@ manipulators:
   arms:
     - model: kinova_gen3_7dof
       parent: top_plate_mount_e9
-      xyz: [0.0, 0.0, 0.046]
+      xyz: [0.0, 0.0, 0.0046]
       rpy: [0.0, 0.0, 3.14159]
       ip: 192.168.131.40
       port: 10000
       vision: true
       poses:
         - name: Ready
-          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+          joints: [0.0, -0.9, 0.0, 2.0, 0.0, 1.0, -1.571]
         - name: Forward
-          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+          joints: [0.0, 0.7, 0.0, -1.5, 0.0, -1.5, -1.571]
         - name: Straight
-          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.571]
         - name: Stow
-          joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+          joints: [2.225, 1.375, 0.0, 1.75, -2.3, -1.575, -1.571]
       gripper:
         model: robotiq_2f_85
         xyz: [0.0, 0.0, 0.0]
