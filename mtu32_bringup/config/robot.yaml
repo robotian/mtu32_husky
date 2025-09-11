@@ -55,6 +55,9 @@ platform:
     urdf:
       package: mtu32_description
       path: urdf/robot_description.urdf.xacro
+    launch:
+      package: mtu32_bringup
+      path: launch/swift_nav.launch.py
 mounts:
   fath_pivot:
     - parent: top_plate_mount_c1
@@ -86,7 +89,7 @@ sensors:
   gps:
     - model: swiftnav_duro
       urdf_enabled: true
-      launch_enabled: true
+      launch_enabled: false
       parent: base_link
       xyz: [-0.27979, -0.21229, 0.46735]
       rpy: [0.0, 0.0, 0.0]
@@ -133,6 +136,7 @@ manipulators:
       rpy: [0.0, 0.0, 3.14159]
       ip: 192.168.131.40
       port: 10000
+      vision: true
       poses:
         - name: Ready
           joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -146,4 +150,3 @@ manipulators:
         model: robotiq_2f_85
         xyz: [0.0, 0.0, 0.0]
         rpy: [0.0, 0.0, 0.0]
-        test: false
