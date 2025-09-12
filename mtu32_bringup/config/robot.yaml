@@ -14,7 +14,7 @@ system:
       servers:
         - hostname: cpr-a300-00036
           port: 11811
-          enabled: True
+          enabled: true
     workspaces:
     - "/home/robot/colcon_ws/install/setup.bash"
 platform:
@@ -105,9 +105,9 @@ sensors:
     - model: hokuyo_ust
       urdf_enabled: true
       launch_enabled: true
-      parent: base_link
-      xyz: [0.0, -0.2875, 0.2775]
-      rpy: [0.0, 0.0, -1.5708]
+      parent: wireless_charger_lidar_mount
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
       ros_parameters:
         urg_node:
           laser_frame_id: lidar2d_0_laser
@@ -147,7 +147,7 @@ manipulators:
         - name: Straight
           joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.571]
         - name: Stow
-          joints: [2.225, 1.375, 0.0, 1.75, -2.3, -1.575, -1.571]
+          joints: [2.225, 1.3, 0.0, 1.75, -2.4, -1.65, -1.5]
       gripper:
         model: robotiq_2f_85
         xyz: [0.0, 0.0, 0.0]
