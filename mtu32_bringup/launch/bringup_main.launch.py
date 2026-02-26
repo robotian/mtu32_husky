@@ -80,8 +80,8 @@ def launch_setup(context, *args, **kwargs):
     platform_model = clearpath_config.platform.get_platform_model()
 
     remappings_tf=[
-                ('/tf','tf'),
-                ('/tf_static','tf_static'),
+                ('/tf',f'/{namespace}/tf'),
+                ('/tf_static',f'/{namespace}/tf_static'),
             ]
 
     load_nodes = GroupAction(        

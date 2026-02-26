@@ -24,26 +24,26 @@ def generate_launch_description():
 
 
     # Read robot YAML
-    config = read_yaml(os.path.join(setup_path.perform(context), 'robot.yaml'))
+    # config = read_yaml(os.path.join(setup_path.perform(context), 'robot.yaml'))
     # Parse robot YAML into config
-    clearpath_config = ClearpathConfig(config)
+    # clearpath_config = ClearpathConfig(config)
 
-    namespace = clearpath_config.system.namespace
-    platform_model = clearpath_config.platform.get_platform_model()
+    # namespace = clearpath_config.system.namespace
+    # platform_model = clearpath_config.platform.get_platform_model()
 
 
     remappings_tf=[
-                ('/tf','tf'),
-                ('/tf_static','tf_static'),
+                ('/tf','/a300_00036/tf'),
+                ('/tf_static','/a300_00036/tf_static'),
             ]
 
     laser_filter_node = Node(
         package="laser_filters",
         executable="scan_to_scan_filter_chain",
-        namespace=f'/{namespace}/sensors/lidar2d_0',
+        namespace='/a300_00036/sensors/lidar2d_0',
         parameters=[
             PathJoinSubstitution(
-                [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "hokuyo_lidar_filter.yaml"]
+                [get_package_share_directory("mtu32_bringup"), "config", "a300", "hokuyo_lidar_filter.yaml"]
             )
         ],
         remappings= remappings_tf,        
@@ -55,14 +55,14 @@ def generate_launch_description():
         executable='mocap_fake_ekf_node',
         name='mocap_fake_ekf_node',
         output='screen',
-        namespace=f'/{namespace}',
+        namespace='/a300_00036',
         parameters=[
             {'mocap_odom_topic': 'ground_truth/odom'},
         ],
         remappings=[
-            ('/tf',f'{namespace}/tf'),
-            ('/tf_static',f'{namespace}/tf_static'),         
-            ('odom_filtered', f'{namespace}/platform/odom_filtered')
+            ('/tf','/a300_00036/tf'),
+            ('/tf_static','/a300_00036/tf_static'),         
+            ('odom_filtered', '/a300_00036/platform/odom_filtered')
         ],
     )
 
@@ -70,7 +70,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_mocap2map_publisher',
-        namespace=f'/{namespace}',
+        namespace='/a300_00036',
         output='screen',
         arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
         remappings = remappings_tf,
@@ -80,7 +80,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_map2odom_publisher',
-        namespace=f'/{namespace}',
+        namespace='/a300_00036',
         output='screen',
         arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
         remappings = remappings_tf,
@@ -89,7 +89,7 @@ def generate_launch_description():
     # Create the launch description and populate
     ld = LaunchDescription()
 
-    ld.add_action(la_setup_path)
+    # ld.add_action(la_setup_path)?
     ld.add_action(laser_filter_node)
     ld.add_action(mocap_fake_ekf_node)
     ld.add_action(static_tf_mocap2map_publisher_node)

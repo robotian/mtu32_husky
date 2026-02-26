@@ -1,6 +1,6 @@
 /**/scan_to_scan_filter_chain:
   ros__parameters:
-    box_filter:
+    filter1:
       name: box_filter
       type: laser_filters/LaserScanBoxFilter
       params:
@@ -12,11 +12,59 @@
         min_y: -0.3
         min_z: -0.5        
         invert: false # activate to remove all points outside of the box
-    speckle_filter:
+    filter2:
       name: speckle_filter
       type: laser_filters/LaserScanSpeckleFilter
       params:
-        filter_type: distance
-        max_range: 2.0
+        # Select which filter type to use.
+        # 0: Range based filtering (distance between consecutive points)
+        # 1: Euclidean filtering based on radius outlier search
+        filter_type: 0
+
+        # Only ranges smaller than this range are taken into account
+        max_range: 1.0
+
+        # filter_type[0] (Distance): max distance between consecutive points
+        # filter_type[1] (RadiusOutlier): max distance between points
         max_range_difference: 0.1
-        filter_window: 2 # Remove points that don't have at least 2 neighbors
+
+        # filter_type[0] (Distance): Number of consecutive ranges that will be tested for max_distance
+        # filter_type[1] (RadiusOutlier): Minimum number of neighbors
+        filter_window: 5
+
+
+# scan_filter_chain:
+# - name: speckle_filter
+#   type: laser_filters/LaserScanSpeckleFilter
+#   params:
+#     # Select which filter type to use.
+#     # 0: Range based filtering (distance between consecutive points)
+#     # 1: Euclidean filtering based on radius outlier search
+#     filter_type: 0
+
+#     # Only ranges smaller than this range are taken into account
+#     max_range: 2.0
+
+#     # filter_type[0] (Distance): max distance between consecutive points
+#     # filter_type[1] (RadiusOutlier): max distance between points
+#     max_range_difference: 0.1
+
+#     # filter_type[0] (Distance): Number of consecutive ranges that will be tested for max_distance
+#     # filter_type[1] (RadiusOutlier): Minimum number of neighbors
+#     filter_window: 2
+
+# /**/scan_to_scan_filter_chain:
+#   ros__parameters:
+#     filter1:
+#       name: box_filter
+#       type: laser_filters/LaserScanBoxFilter
+#       params:
+#         box_frame: base_link
+#         max_x: 0.5
+#         max_y: 0.3
+#         max_z: 0.5
+#         min_x: -0.5
+#         min_y: -0.3
+#         min_z: -0.5  
+        
+#         invert: false # activate to remove all points outside of the box
