@@ -1,0 +1,52 @@
+launch:
+- arg:
+    name: device
+    default: "0"
+
+- node_container:
+    pkg: rclcpp_components
+    exec: component_container
+    name: apriltag_container
+    namespace: "a300_00036/manipulators/arm_0_color_camera"
+    composable_node:
+    # - pkg: camera_ros
+    #   plugin: camera::CameraNode
+    #   name: camera
+    #   namespace: arm_0_color_camera
+    #   param:
+    #   - name: camera
+    #     value: $(var device)
+    #   extra_arg:
+    #   - name: use_intra_process_comms
+    #     value: "True"
+
+    - pkg: image_proc
+      plugin: image_proc::RectifyNode
+      name: rectify
+      namespace: a300_00036/manipulators/arm_0_color_camera
+      remap:
+      - from: image
+        to: image_raw
+      - from: camera_info
+        to: camera_info
+      extra_arg:
+      - name: use_intra_process_comms
+        value: "True"
+
+    - pkg: apriltag_ros
+      plugin: AprilTagNode
+      name: apriltag
+      namespace: a300_00036/manipulators/arm_0_color_camera
+      remap:
+      - from: /apriltag/image_rect
+        to: image_rect
+      - from: /camera/camera_info
+        to: camera_info
+      - from: /tf
+        to: /a300_00036/tf
+      
+      param:
+      - from: $(find-pkg-share mtu32_bringup)/config/Gen3_tags_36h11.yaml
+      extra_arg:
+      - name: use_intra_process_comms
+        value: "True"
