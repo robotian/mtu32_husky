@@ -37,7 +37,8 @@ def generate_launch_description():
     map_yaml_file = LaunchConfiguration('map')
 
     # Variables
-    lifecycle_nodes = ['map_saver','map_server']
+    # lifecycle_nodes = ['map_saver','map_server']
+    lifecycle_nodes = ['map_server']
 
     # Getting directories and launch-files
     bringup_dir = get_package_share_directory('nav2_bringup')
@@ -73,7 +74,7 @@ def generate_launch_description():
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='True',
+        default_value='False',
         description='Use simulation (Gazebo) clock if true',
     )
 
@@ -101,15 +102,15 @@ def generate_launch_description():
     start_map_server = GroupAction(
         actions=[
             SetParameter('use_sim_time', use_sim_time),
-            Node(
-                package='nav2_map_server',
-                executable='map_saver_server',
-                output='screen',
-                respawn=use_respawn,
-                respawn_delay=2.0,
-                arguments=['--ros-args', '--log-level', log_level],
-                parameters=[configured_params],
-            ),
+            # Node(
+            #     package='nav2_map_server',
+            #     executable='map_saver_server',
+            #     output='screen',
+            #     respawn=use_respawn,
+            #     respawn_delay=2.0,
+            #     arguments=['--ros-args', '--log-level', log_level],
+            #     # parameters=[configured_params],
+            # ),
             Node(
                 package='nav2_map_server',
                 executable='map_server',
@@ -117,7 +118,7 @@ def generate_launch_description():
                 output='screen',
                 respawn=use_respawn,
                 respawn_delay=2.0,
-                parameters=[configured_params, {'yaml_filename': map_yaml_file}],
+                parameters=[{'yaml_filename': map_yaml_file}],
                 arguments=['--ros-args', '--log-level', log_level],
                 remappings=remappings,
             ),

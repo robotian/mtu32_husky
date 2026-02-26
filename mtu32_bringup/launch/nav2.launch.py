@@ -129,7 +129,7 @@ def launch_setup(context, *args, **kwargs):
             PythonLaunchDescriptionSource(launch_map_server),
             launch_arguments=[
                 ('use_sim_time', use_sim_time),
-                ('params_file', rewritten_parameters),                
+                # ('params_file', rewritten_parameters),                
                 ('namespace', namespace),
                 ('autostart', autostart),
                 ('use_lifecycle_manager', use_lifecycle_manager),
