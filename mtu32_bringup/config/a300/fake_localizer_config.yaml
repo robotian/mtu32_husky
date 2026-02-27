@@ -19,6 +19,6 @@
     base_link_frame: "base_link"  # The frame of the mocap odometry (e.g., "ground_truth")
     
 
-    # map_pose_wrt_ref: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]  # mocap_space1.yaml
-    map_pose_wrt_ref: [-0.822, 0.328, 0.163, -0.003, 0.002, 0.532, 0.846]  # meem301_2.yaml
+    map_pose_wrt_ref: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]  # mocap_space1.yaml
+    # map_pose_wrt_ref: [-0.822, 0.328, 0.163, -0.003, 0.002, 0.532, 0.846]  # meem301_2.yaml
       

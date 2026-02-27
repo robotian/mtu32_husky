@@ -112,7 +112,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     launch_nav2 = PathJoinSubstitution(
-      [pkg_nav2_bringup, 'launch', 'navigation_launch.py'])
+      [pkg_mtu_bringup, 'launch', 'navigation_launch.py'])
 
     launch_map_server = PathJoinSubstitution(
         [pkg_mtu_bringup, 'launch', 'map_server.launch.py'])
@@ -122,8 +122,8 @@ def launch_setup(context, *args, **kwargs):
         PushRosNamespace(namespace),
         SetRemap('/' + namespace + '/odom',
                  '/' + namespace + '/platform/odom'),
-        # SetRemap('/tf', '/' + namespace + '/tf'),
-        # SetRemap('/tf_static', '/' + namespace + '/tf_static'),
+        SetRemap('/tf', '/' + namespace + '/tf'),
+        SetRemap('/tf_static', '/' + namespace + '/tf_static'),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(launch_map_server),
