@@ -82,6 +82,8 @@ def launch_setup(context, *args, **kwargs):
     autostart = LaunchConfiguration('autostart')
     use_lifecycle_manager = LaunchConfiguration('use_lifecycle_manager')
 
+    map_file = os.path.join(pkg_mtu_bringup, 'map', 'mocap_space1.yaml')    
+
     # Read robot YAML
     config = read_yaml(os.path.join(setup_path.perform(context), 'robot.yaml'))
     # Parse robot YAML into config
@@ -125,16 +127,16 @@ def launch_setup(context, *args, **kwargs):
         SetRemap('/tf', '/' + namespace + '/tf'),
         SetRemap('/tf_static', '/' + namespace + '/tf_static'),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(launch_map_server),
-            launch_arguments=[
-                ('use_sim_time', use_sim_time),
-                # ('params_file', rewritten_parameters),                
-                ('namespace', namespace),
-                ('autostart', autostart),
-                ('use_lifecycle_manager', use_lifecycle_manager),
-              ]
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(launch_map_server),
+        #     launch_arguments=[
+        #         ('use_sim_time', use_sim_time),
+        #         # ('params_file', rewritten_parameters),                
+        #         ('namespace', namespace),
+        #         ('autostart', autostart),
+        #         ('use_lifecycle_manager', use_lifecycle_manager),
+        #       ]
+        # ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(launch_nav2),
@@ -142,7 +144,8 @@ def launch_setup(context, *args, **kwargs):
                 ('use_sim_time', use_sim_time),
                 ('params_file', rewritten_parameters),
                 ('use_composition', 'False'),
-                ('namespace', namespace)
+                ('namespace', namespace),
+                ('map',map_file),
               ]
         ),
     ])
