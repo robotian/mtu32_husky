@@ -40,7 +40,7 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_lifecycle_manager', default_value='false',
                           choices=['true', 'false'],
                           description='Enable bond connection during node activation'),    
-    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='false',
+    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='true',
                           choices=['true', 'false'],
                           description=''),
 

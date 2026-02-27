@@ -44,10 +44,10 @@ def generate_launch_description():
     bringup_dir = get_package_share_directory('nav2_bringup')
 
     mtu_bringup_dir = get_package_share_directory('mtu32_bringup')
-    map_file = os.path.join(mtu_bringup_dir, 'map', 'mocap_space1.yaml')
 
-    # for mode 4
-    # map_file = os.path.join(mtu_bringup_dir, 'map', 'meem301_2.yaml')
+
+    # map_file = os.path.join(mtu_bringup_dir, 'map', 'mocap_space1.yaml')    
+    map_file = os.path.join(mtu_bringup_dir, 'map', 'meem301_2.yaml')
 
     # slam_toolbox_dir = get_package_share_directory('slam_toolbox')
     # slam_launch_file = os.path.join(slam_toolbox_dir, 'launch', 'online_sync_launch.py')
