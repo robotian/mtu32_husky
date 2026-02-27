@@ -45,6 +45,10 @@ def generate_launch_description():
 
     mtu_bringup_dir = get_package_share_directory('mtu32_bringup')
     map_file = os.path.join(mtu_bringup_dir, 'map', 'mocap_space1.yaml')
+
+    # for mode 4
+    # map_file = os.path.join(mtu_bringup_dir, 'map', 'meem301_2.yaml')
+
     # slam_toolbox_dir = get_package_share_directory('slam_toolbox')
     # slam_launch_file = os.path.join(slam_toolbox_dir, 'launch', 'online_sync_launch.py')
 
@@ -102,15 +106,6 @@ def generate_launch_description():
     start_map_server = GroupAction(
         actions=[
             SetParameter('use_sim_time', use_sim_time),
-            # Node(
-            #     package='nav2_map_server',
-            #     executable='map_saver_server',
-            #     output='screen',
-            #     respawn=use_respawn,
-            #     respawn_delay=2.0,
-            #     arguments=['--ros-args', '--log-level', log_level],
-            #     # parameters=[configured_params],
-            # ),
             Node(
                 package='nav2_map_server',
                 executable='map_server',

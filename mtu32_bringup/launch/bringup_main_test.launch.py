@@ -105,8 +105,6 @@ def launch_setup(context, *args, **kwargs):
                 namespace=f'/{namespace}',
                 output='screen',
                 arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
-                # arguments=['0.463', '-1.044', '-0.158', '-0.0014149644412100315', '0.003686182200908661', '0.9419442415237427','0.33574607968330383', 'base_mocap', 'map'],
-                # [-0.463, 1.044, 0.158, -0.0014149644412100315, 0.003686182200908661, 0.9419442415237427, 0.33574607968330383]
                 remappings = remappings_tf,
                 condition=UnlessCondition(use_mocap_fake_localizer),
             ),

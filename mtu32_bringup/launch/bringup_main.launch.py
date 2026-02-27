@@ -40,19 +40,7 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_lifecycle_manager', default_value='false',
                           choices=['true', 'false'],
                           description='Enable bond connection during node activation'),    
-    # DeclareLaunchArgument('use_mocap_localization', default_value='false',
-    #                       choices=['true', 'false'],
-    #                       description='Enable the Mocap ground truth data as localization source. If this is disable, a localizer or a publisher should provide the transformation from map to odom frame.'),
-    # DeclareLaunchArgument('use_mocap_odom', default_value='true',
-    #                       choices=['true', 'false'],
-    #                       description='Enable the Mocap ground truth data as odometry source. Note that the EKF node should be diabled in the robot.yaml file if this is enabled, since the EKF node will fuse the mocap ground truth data and the original odometry data to provide filtered odometry data, which can cause issues if the mocap ground truth data is used as odometry source for localization and navigation at the same time.'),
-    DeclareLaunchArgument('is_Local_EKF_running', default_value='true',
-                          choices=['true', 'false'],
-                          description='Whether the local EKF node is running to provide filtered odometry data. If this is true, the mocap fake EKF node will be disabled since it will fuse the mocap ground truth data and the original odometry data to provide filtered odometry data, which can cause issues if the mocap ground truth data is used as odometry source for localization and navigation at the same time.'),
-    DeclareLaunchArgument('is_Localizer_running', default_value='false',
-                          choices=['true', 'false'],
-                          description='Whether the localizer node is running to provide localization data. If this is true, the mocap fake localizer node will be disabled since it will provide localization data using mocap ground truth data, which can cause issues if the mocap ground truth data is used as localization source for localization and navigation at the same time.'),
-    DeclareLaunchArgument('use_mocap_map_frame', default_value='false',
+    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='false',
                           choices=['true', 'false'],
                           description=''),
 
@@ -61,14 +49,9 @@ ARGUMENTS = [
 
 def launch_setup(context, *args, **kwargs):
     pkg_clearpath_nav2_demos = get_package_share_directory('mtu32_bringup')
-    # pkg_nav2_bringup = get_package_share_directory('nav2_bringup')
 
     setup_path = LaunchConfiguration('setup_path')
-    # use_mocap_localization = LaunchConfiguration('use_mocap_localization')
-    # use_mocap_odom = LaunchConfiguration('use_mocap_odom')
-    is_Local_EKF_running = LaunchConfiguration('is_Local_EKF_running')
-    is_Localizer_running = LaunchConfiguration('is_Localizer_running')
-    use_mocap_map_frame = LaunchConfiguration('use_mocap_map_frame')
+    use_mocap_fake_localizer = LaunchConfiguration('use_mocap_fake_localizer')
 
 
     # Read robot YAML
@@ -111,7 +94,7 @@ def launch_setup(context, *args, **kwargs):
                     {'mocap_odom_topic': 'ground_truth/odom'},
                 ],
                 remappings= remappings_tf  + [('odom_filtered', 'platform/odom_filtered')],        
-                # condition=UnlessCondition(is_Local_EKF_running),
+                condition=UnlessCondition(use_mocap_fake_localizer),
             ),            
 
             # # static transform from mocap frame to map frame, since mocap provides ground truth in the map frame
@@ -122,10 +105,8 @@ def launch_setup(context, *args, **kwargs):
                 namespace=f'/{namespace}',
                 output='screen',
                 arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
-                # arguments=['0.463', '-1.044', '-0.158', '-0.0014149644412100315', '0.003686182200908661', '0.9419442415237427','0.33574607968330383', 'base_mocap', 'map'],
-                # [-0.463, 1.044, 0.158, -0.0014149644412100315, 0.003686182200908661, 0.9419442415237427, 0.33574607968330383]
                 remappings = remappings_tf,
-                # condition=IfCondition(use_mocap_map_frame),
+                condition=UnlessCondition(use_mocap_fake_localizer),
             ),
             # static transform from map frame to odom frame, since mocap provides ground truth in the map frame and we want to use that as our odometry source for localization and navigation
             Node(
@@ -136,30 +117,26 @@ def launch_setup(context, *args, **kwargs):
                 output='screen',
                 arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
                 remappings = remappings_tf,
-                # condition=UnlessCondition(use_mocap_localization),
+                condition=UnlessCondition(use_mocap_fake_localizer),
             ),
 
-            # Node(
-            #     package='mocap_fake_localizer', # tf: map -> odom
-            #     executable='mocap_fake_localizer_node',
-            #     name='mocap_fake_localizer_node',
-            #     output='screen',
-            #     namespace=f'/{namespace}',
-            #     parameters=[
-            #         PathJoinSubstitution(
-            #             [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "fake_localizer_config.yaml"]
-            #         )
-            #     ],
-            #     remappings= remappings_tf,        
-            # ),            
+            Node(
+                package='mocap_fake_localizer', # tf: map -> odom
+                executable='mocap_fake_localizer_node',
+                name='mocap_fake_localizer_node',
+                output='screen',
+                namespace=f'/{namespace}',
+                parameters=[
+                    PathJoinSubstitution(
+                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "fake_localizer_config.yaml"]
+                    )
+                ],
+                remappings= remappings_tf,        
+                condition=IfCondition(use_mocap_fake_localizer),
+            ),            
         ],
     )
-
     return [load_nodes]
-
-
-
-
 
 def generate_launch_description():
     ld = LaunchDescription(ARGUMENTS)
