@@ -357,7 +357,6 @@ docking_server:
       type: 'simple_charging_dock'
       frame: map
       pose: [0.56, 1.624, 1.571]
-
     controller:
       k_phi: 3.0
       k_delta: 2.0

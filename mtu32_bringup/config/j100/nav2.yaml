@@ -331,7 +331,7 @@ docking_server:
       plugin: 'opennav_docking::SimpleChargingDock'
       docking_threshold: 0.05
       staging_x_offset: -0.7
-      use_external_detection_pose: true
+      use_external_detection_pose: false
       use_battery_status: false # true
       use_stall_detection: false # true
 
@@ -350,9 +350,19 @@ docking_server:
     #   type: 'simple_charging_dock'
     #   frame: map
     #   pose: [0.0, 0.0, 0.0]
-
+    # Jackal Charging dock
+    docks: ['jackal_charger']  # Input your docks here
+    jackal_charger:
+      type: 'simple_charging_dock'
+      frame: map
+      pose: [-1.57, 0.0, 3.141592]
     controller:
       k_phi: 3.0
       k_delta: 2.0
       v_linear_min: 0.15
       v_linear_max: 0.15
+      v_angular_max: 0.25 # Maximum angular velocity
+      rotate_to_heading_max_angular_accel: 1.5 # Max angular acceleration (rad/s²). Default: 3.2
+      slowdown_radius: 0.25 # Radius to begin slowdown
+      projection_time: 1.0  # Projection timestep (s)
+      dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3
