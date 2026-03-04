@@ -64,7 +64,7 @@ ARGUMENTS = [
     DeclareLaunchArgument('autostart', default_value='true',
                           choices=['true', 'false'],
                           description='Automatically startup the slamtoolbox. Ignored when use_lifecycle_manager is true.'),  # noqa: E501
-    DeclareLaunchArgument('use_lifecycle_manager', default_value='false',
+    DeclareLaunchArgument('use_lifecycle_manager', default_value='true',
                           choices=['true', 'false'],
                           description='Enable bond connection during node activation'),
 ]
@@ -95,7 +95,10 @@ def launch_setup(context, *args, **kwargs):
     # see if we've overridden the scan_topic
     eval_scan_topic = scan_topic.perform(context)
     if len(eval_scan_topic) == 0:
-        eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan'
+        if platform_model == 'j100':
+            eval_scan_topic = f'/{namespace}/sensors/camera_0/scan'
+        else:
+            eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan'
 
     file_parameters = PathJoinSubstitution([
         pkg_mtu_bringup,
@@ -113,11 +116,13 @@ def launch_setup(context, *args, **kwargs):
         convert_types=True
     )
 
+    # print(rewritten_parameters.perform(context))
+
     launch_nav2 = PathJoinSubstitution(
       [pkg_mtu_bringup, 'launch', 'navigation_launch.py'])
 
     launch_map_server = PathJoinSubstitution(
-        [pkg_mtu_bringup, 'launch', 'map_server.launch.py'])
+      [pkg_mtu_bringup, 'launch', 'map_server.launch.py'])
 
 
     nav2 = GroupAction([
@@ -146,6 +151,8 @@ def launch_setup(context, *args, **kwargs):
                 ('use_composition', 'False'),
                 ('namespace', namespace),
                 ('map',map_file),
+                ('autostart', autostart),
+                ('use_lifecycle_manager', use_lifecycle_manager),
               ]
         ),
     ])

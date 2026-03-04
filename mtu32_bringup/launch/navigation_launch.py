@@ -65,7 +65,7 @@ def generate_launch_description():
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {'autostart': autostart}
-
+    
     configured_params = ParameterFile(
         RewrittenYaml(
             source_file=params_file,
@@ -343,6 +343,13 @@ def generate_launch_description():
                         remappings=remappings,
                     ),
                     ComposableNode(
+                        package='nav2_map_server',
+                        plugin='nav2_map_server::MapServer',
+                        name='map_server',
+                        parameters=[{'yaml_filename': map_yaml_file}],
+                        remappings=remappings,
+                    ),
+                    ComposableNode(
                         package='nav2_lifecycle_manager',
                         plugin='nav2_lifecycle_manager::LifecycleManager',
                         name='lifecycle_manager_navigation',
@@ -353,6 +360,16 @@ def generate_launch_description():
                 ],
             ),
         ],
+    )
+
+    start_nav2_container_cmd = Node(
+        condition=IfCondition(use_composition),
+        name=container_name,
+        # namespace=namespace,
+        package='rclcpp_components',
+        executable='component_container',
+        arguments=['--ros-args', '--log-level', log_level],
+        output='screen',
     )
 
     # Create the launch description and populate
@@ -374,5 +391,6 @@ def generate_launch_description():
     # Add the actions to launch all of the navigation nodes
     ld.add_action(load_nodes)
     ld.add_action(load_composable_nodes)
+    ld.add_action(start_nav2_container_cmd)
 
     return ld
