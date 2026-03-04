@@ -365,7 +365,6 @@ def generate_launch_description():
     start_nav2_container_cmd = Node(
         condition=IfCondition(use_composition),
         name=container_name,
-        # namespace=namespace,
         package='rclcpp_components',
         executable='component_container',
         arguments=['--ros-args', '--log-level', log_level],
