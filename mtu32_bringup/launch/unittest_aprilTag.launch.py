@@ -25,7 +25,7 @@ def generate_launch_description():
     # 3. Create the Composable Node Container
     apriltag_container = ComposableNodeContainer(
         name='apriltag_container',
-        namespace='/j100_0921/sensors/camera_0/color',
+        namespace='/j100_0921',
         package='rclcpp_components',
         executable='component_container',
         composable_node_descriptions=[
@@ -33,7 +33,7 @@ def generate_launch_description():
                 package='apriltag_ros',
                 plugin='AprilTagNode',
                 name='apriltag',
-                namespace='/j100_0921/sensors/camera_0/color',
+                namespace='/j100_0921',
                 remappings=[
                     ('image_rect', '/j100_0921/sensors/camera_0/color/image'),
                     ('/camera/camera_info', '/j100_0921/sensors/camera_0/color/image/camera_info'),

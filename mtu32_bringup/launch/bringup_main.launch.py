@@ -67,8 +67,28 @@ def launch_setup(context, *args, **kwargs):
                 ('/tf_static',f'/{namespace}/tf_static'),
             ]
 
+    # platform_config_path = os.path.join(
+    #     get_package_share_directory('mtu32_bringup'), 'config', f'{platform_model}'
+    # )
+
     depth2scan_param_config = os.path.join(
-        get_package_share_directory('mtu32_bringup'), 'config',f'{platform_model}', 'depth2scan.yaml')
+        get_package_share_directory('mtu32_bringup'), 
+        'config',
+        f'{platform_model}', 
+        'depth2scan.yaml'
+        )
+
+    aprilTag_config =  os.path.join(
+        get_package_share_directory('mtu32_bringup'),
+        'config',
+        'tags_36h11.yaml'
+    )
+
+    tf2pose_config = os.path.join(
+        get_package_share_directory('mtu32_bringup'),
+        'config',f'{platform_model}',
+        'dock_pose_params.yaml'
+    )
 
     load_nodes = GroupAction(        
         actions=[
@@ -147,7 +167,30 @@ def launch_setup(context, *args, **kwargs):
                             ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
                             ('scan', f'/{namespace}/sensors/camera_0/scan')],
                 parameters=[depth2scan_param_config]
-            ),          
+            ),  
+
+            Node(
+                package='apriltag_ros',
+                name='apriltag',
+                executable='apriltag_node',
+                namespace=f'/{namespace}',
+                remappings= remappings_tf + [
+                    ('image_rect', f'/{namespace}/sensors/camera_0/color/image'),
+                    ('/camera/camera_info', f'/{namespace}/sensors/camera_0/color/image/camera_info'),
+                    ('detections', f'/{namespace}/sensors/camera_0/color/aprilTag_detections'),
+                ],
+                parameters=[aprilTag_config],
+            ),
+
+
+            Node(
+                package='docking_utils',
+                name='tf2_pose_node',
+                executable='tf2_pose_node',
+                namespace=f'/{namespace}',
+                parameters=[tf2pose_config],
+                remappings=remappings_tf,
+            ),  
         ],
     )
     return [load_nodes]
