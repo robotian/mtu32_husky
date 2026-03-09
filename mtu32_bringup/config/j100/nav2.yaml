@@ -36,8 +36,8 @@ controller_server:
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.15
+      yaw_goal_tolerance: 0.15
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
@@ -84,7 +84,7 @@ controller_server:
         enabled: true
         cost_power: 1
         cost_weight: 3.0
-        threshold_to_consider: 0.5
+        threshold_to_consider: 1.0 #Only focus on final yaw in this value [meter]
       PreferForwardCritic:
         enabled: true
         cost_power: 1
@@ -95,7 +95,7 @@ controller_server:
         cost_power: 1
         cost_weight: 3.81
         critical_cost: 300.0
-        # consider_footprint: true
+        consider_footprint: true   # sometime this can cause issue.
         collision_cost: 1000000.0
         near_goal_distance: 1.0
         trajectory_point_step: 2
@@ -113,7 +113,7 @@ controller_server:
         cost_power: 1
         cost_weight: 5.0
         offset_from_furthest: 5
-        threshold_to_consider: 1.4
+        threshold_to_consider: 0.2 # Stay on the path until almost touching the goal
       PathAngleCritic:
         enabled: true
         cost_power: 1
@@ -223,7 +223,7 @@ planner_server:
     #   use_astar: false
     #   allow_unknown: true
     GridBased:
-      plugin: "nav2_smac_planner::SmacPlanner2D"
+      plugin: "nav2_smac_planner::SmacPlannerHybrid"
       tolerance: 0.5                      # tolerance for planning if unable to reach exact pose, in meters
       downsample_costmap: false           # whether or not to downsample the map
       downsampling_factor: 1              # multiplier for the resolution of the costmap layer (e.g. 2 on a 5cm costmap would be 10cm)
@@ -237,7 +237,7 @@ planner_server:
       angle_quantization_bins: 64         # For Hybrid nodes: Number of angle bins for search, must be 1 for 2D node (no angle search)
       analytic_expansion_ratio: 3.5       # For Hybrid/Lattice nodes: The ratio to attempt analytic expansions during search for final approach.
       analytic_expansion_max_length: 3.0    # For Hybrid/Lattice nodes: The maximum length of the analytic expansion to be considered valid to prevent unsafe shortcutting (in meters). This should be scaled with minimum turning radius and be no less than 4-5x the minimum radius
-      analytic_expansion_max_cost: 200   # For Hybrid/Lattice nodes: The maximum single cost for any part of an analytic expansion to contain and be valid (except when necessary on approach to goal)
+      analytic_expansion_max_cost: 200.0   # For Hybrid/Lattice nodes: The maximum single cost for any part of an analytic expansion to contain and be valid (except when necessary on approach to goal)
       analytic_expansion_max_cost_override: false # For Hybrid/Lattice nodes: Whether or not to override the maximum cost setting if within critical distance to goal (ie probably required). If expansion is within 2*pi*min_r of the goal, then it will override the max cost if ``false``.
       minimum_turning_radius: 0.2      # For Hybrid/Lattice nodes: minimum turning radius in m of path / vehicle
       reverse_penalty: 2.1                # For Reeds-Shepp model: penalty to apply if motion is reversing, must be => 1
@@ -315,8 +315,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [1.0, 0.0, 1.0]
-    min_velocity: [-1.0, 0.0, -1.0]
+    max_velocity: [0.5, 0.0, 1.0]
+    min_velocity: [-0.5, 0.0, -1.0]
     max_accel: [2.5, 0.0, 2.5]
     max_decel: [-2.5, 0.0, -2.5]
     odom_topic: "platform/odom/filtered"
