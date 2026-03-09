@@ -24,7 +24,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, SetParameter, SetRemap
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import HasNodeParams, RewrittenYaml
-
+from launch_ros.actions import PushRosNamespace, SetRemap
 
 def generate_launch_description():
     # Input parameters declaration
@@ -103,8 +103,9 @@ def generate_launch_description():
     )
 
     # Nodes launching commands
-    start_map_server = GroupAction(
+    start_map_server = GroupAction(        
         actions=[
+            PushRosNamespace(namespace),
             SetParameter('use_sim_time', use_sim_time),
             Node(
                 package='nav2_map_server',

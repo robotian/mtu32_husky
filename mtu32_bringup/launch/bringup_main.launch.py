@@ -22,7 +22,7 @@ from launch.substitutions import (
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import PushRosNamespace, SetRemap, Node
 from nav2_common.launch import RewrittenYaml
-
+from launch.substitutions import PythonExpression
 
 ARGUMENTS = [
     DeclareLaunchArgument('use_sim_time', default_value='false',
@@ -43,6 +43,10 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_mocap_fake_localizer', default_value='true',
                           choices=['true', 'false'],
                           description=''),
+    # DeclareLaunchArgument('use_composition_nav',
+    #                        default_value='False',
+    #                        description='Whether to use composed bringup',
+    #                     )
 
 ]
 
@@ -52,6 +56,7 @@ def launch_setup(context, *args, **kwargs):
 
     setup_path = LaunchConfiguration('setup_path')
     use_mocap_fake_localizer = LaunchConfiguration('use_mocap_fake_localizer')
+    # use_composition_nav = LaunchConfigAsBool('use_composition_nav')
 
 
     # Read robot YAML
@@ -67,6 +72,31 @@ def launch_setup(context, *args, **kwargs):
                 ('/tf_static',f'/{namespace}/tf_static'),
             ]
 
+    # platform_config_path = os.path.join(
+    #     get_package_share_directory('mtu32_bringup'), 'config', f'{platform_model}'
+    # )
+
+    depth2scan_param_config = os.path.join(
+        get_package_share_directory('mtu32_bringup'), 
+        'config',
+        f'{platform_model}', 
+        'depth2scan.yaml'
+        )
+
+    aprilTag_config =  os.path.join(
+        get_package_share_directory('mtu32_bringup'),
+        'config',
+        'tags_36h11.yaml'
+    )
+
+    tf2pose_config = os.path.join(
+        get_package_share_directory('mtu32_bringup'),
+        'config',f'{platform_model}',
+        'dock_pose_params.yaml'
+    )
+
+    
+
     load_nodes = GroupAction(        
         actions=[
             # laser filter node to filter hokuyo lidar scan data, since the hokuyo lidar is quite noisy and can cause issues for localization and navigation
@@ -81,6 +111,7 @@ def launch_setup(context, *args, **kwargs):
                     )
                 ],
                 remappings= remappings_tf,  
+                condition=IfCondition(PythonExpression(["'", platform_model, "' == 'a300'"])),
             ),
 
             # mocap fake ekf node to provide filtered odometry for localization and navigation, using mocap ground truth as input
@@ -133,7 +164,41 @@ def launch_setup(context, *args, **kwargs):
                 ],
                 remappings= remappings_tf,        
                 condition=IfCondition(use_mocap_fake_localizer),
-            ),            
+            ),  
+
+            Node(
+                package='depthimage_to_laserscan',
+                executable='depthimage_to_laserscan_node',
+                name='depthimage_to_laserscan',
+                namespace=f'/{namespace}',
+                remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'),
+                            ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
+                            ('scan', f'/{namespace}/sensors/camera_0/scan')],
+                parameters=[depth2scan_param_config]
+            ),  
+
+            Node(
+                package='apriltag_ros',
+                name='apriltag',
+                executable='apriltag_node',
+                namespace=f'/{namespace}',
+                remappings= remappings_tf + [
+                    ('image_rect', f'/{namespace}/sensors/camera_0/color/image'),
+                    ('/camera/camera_info', f'/{namespace}/sensors/camera_0/color/image/camera_info'),
+                    ('detections', f'/{namespace}/sensors/camera_0/color/aprilTag_detections'),
+                ],
+                parameters=[aprilTag_config],
+            ),
+
+
+            Node(
+                package='docking_utils',
+                name='tf2_pose_node',
+                executable='tf2_pose_node',
+                namespace=f'/{namespace}',
+                parameters=[tf2pose_config],
+                remappings=remappings_tf,
+            ),  
         ],
     )
     return [load_nodes]

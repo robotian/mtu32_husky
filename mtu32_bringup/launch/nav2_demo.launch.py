@@ -60,29 +60,19 @@ ARGUMENTS = [
                           description='Clearpath setup path'),
     DeclareLaunchArgument('scan_topic',
                           default_value='',
-                          description='Override the default 2D laserscan topic'),
-    DeclareLaunchArgument('autostart', default_value='true',
-                          choices=['true', 'false'],
-                          description='Automatically startup the slamtoolbox. Ignored when use_lifecycle_manager is true.'),  # noqa: E501
-    DeclareLaunchArgument('use_lifecycle_manager', default_value='true',
-                          choices=['true', 'false'],
-                          description='Enable bond connection during node activation'),
+                          description='Override the default 2D laserscan topic')
 ]
 
 
 def launch_setup(context, *args, **kwargs):
     # Packages
-    pkg_mtu_bringup = get_package_share_directory('mtu32_bringup')
+    pkg_clearpath_nav2_demos = get_package_share_directory('clearpath_nav2_demos')
     pkg_nav2_bringup = get_package_share_directory('nav2_bringup')
 
     # Launch Configurations
     use_sim_time = LaunchConfiguration('use_sim_time')
     setup_path = LaunchConfiguration('setup_path')
     scan_topic = LaunchConfiguration('scan_topic')
-    autostart = LaunchConfiguration('autostart')
-    use_lifecycle_manager = LaunchConfiguration('use_lifecycle_manager')
-
-    map_file = os.path.join(pkg_mtu_bringup, 'map', 'mocap_space1.yaml')    
 
     # Read robot YAML
     config = read_yaml(os.path.join(setup_path.perform(context), 'robot.yaml'))
@@ -95,13 +85,10 @@ def launch_setup(context, *args, **kwargs):
     # see if we've overridden the scan_topic
     eval_scan_topic = scan_topic.perform(context)
     if len(eval_scan_topic) == 0:
-        if platform_model == 'j100':
-            eval_scan_topic = f'/{namespace}/sensors/camera_0/scan'
-        else:
-            eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan'
+        eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan'
 
     file_parameters = PathJoinSubstitution([
-        pkg_mtu_bringup,
+        pkg_clearpath_nav2_demos,
         'config',
         platform_model,
         'nav2.yaml'])
@@ -116,21 +103,13 @@ def launch_setup(context, *args, **kwargs):
         convert_types=True
     )
 
-    # print(rewritten_parameters.perform(context))
-
     launch_nav2 = PathJoinSubstitution(
-      [pkg_mtu_bringup, 'launch', 'navigation_launch.py'])
-
-    launch_map_server = PathJoinSubstitution(
-      [pkg_mtu_bringup, 'launch', 'map_server.launch.py'])
-
+      [pkg_nav2_bringup, 'launch', 'navigation_launch.py'])
 
     nav2 = GroupAction([
         PushRosNamespace(namespace),
         SetRemap('/' + namespace + '/odom',
                  '/' + namespace + '/platform/odom'),
-        SetRemap('/tf', '/' + namespace + '/tf'),
-        SetRemap('/tf_static', '/' + namespace + '/tf_static'),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(launch_nav2),
@@ -138,10 +117,10 @@ def launch_setup(context, *args, **kwargs):
                 ('use_sim_time', use_sim_time),
                 ('params_file', rewritten_parameters),
                 ('use_composition', 'True'),
-                # ('namespace', namespace),
-                ('map',map_file),
-                ('autostart', autostart),
-                ('use_lifecycle_manager', use_lifecycle_manager),
+                ('namespace', namespace),
+                ('use_intra_process_comms', 'True'),
+                ('autostart', 'True'),
+                ('log_level', 'debug')
               ]
         ),
     ])
