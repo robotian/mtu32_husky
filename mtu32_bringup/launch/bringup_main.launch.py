@@ -22,7 +22,7 @@ from launch.substitutions import (
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import PushRosNamespace, SetRemap, Node
 from nav2_common.launch import RewrittenYaml
-
+from launch.substitutions import PythonExpression
 
 ARGUMENTS = [
     DeclareLaunchArgument('use_sim_time', default_value='false',
@@ -43,6 +43,10 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_mocap_fake_localizer', default_value='true',
                           choices=['true', 'false'],
                           description=''),
+    # DeclareLaunchArgument('use_composition_nav',
+    #                        default_value='False',
+    #                        description='Whether to use composed bringup',
+    #                     )
 
 ]
 
@@ -52,6 +56,7 @@ def launch_setup(context, *args, **kwargs):
 
     setup_path = LaunchConfiguration('setup_path')
     use_mocap_fake_localizer = LaunchConfiguration('use_mocap_fake_localizer')
+    # use_composition_nav = LaunchConfigAsBool('use_composition_nav')
 
 
     # Read robot YAML
@@ -90,21 +95,24 @@ def launch_setup(context, *args, **kwargs):
         'dock_pose_params.yaml'
     )
 
+    
+
     load_nodes = GroupAction(        
         actions=[
             # laser filter node to filter hokuyo lidar scan data, since the hokuyo lidar is quite noisy and can cause issues for localization and navigation
-            # Node(
-            #     package="laser_filters",
-            #     executable="scan_to_scan_filter_chain",
-            #     output='screen',
-            #     namespace=f'/{namespace}/sensors/lidar2d_0',
-            #     parameters=[
-            #         PathJoinSubstitution(
-            #             [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "hokuyo_lidar_filter.yaml"]
-            #         )
-            #     ],
-            #     remappings= remappings_tf,  
-            # ),
+            Node(
+                package="laser_filters",
+                executable="scan_to_scan_filter_chain",
+                output='screen',
+                namespace=f'/{namespace}/sensors/lidar2d_0',
+                parameters=[
+                    PathJoinSubstitution(
+                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "hokuyo_lidar_filter.yaml"]
+                    )
+                ],
+                remappings= remappings_tf,  
+                condition=IfCondition(PythonExpression(["'", platform_model, "' == 'a300'"])),
+            ),
 
             # mocap fake ekf node to provide filtered odometry for localization and navigation, using mocap ground truth as input
             Node(

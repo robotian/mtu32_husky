@@ -24,6 +24,7 @@ from launch_ros.actions import LoadComposableNodes, SetParameter
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from nav2_common.launch import RewrittenYaml
+from launch_ros.actions import PushRosNamespace, SetRemap
 
 
 def generate_launch_description():
@@ -52,7 +53,7 @@ def generate_launch_description():
         'bt_navigator',
         'waypoint_follower',
         'docking_server',
-        'map_server',
+        # 'map_server',
     ]
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
@@ -62,6 +63,8 @@ def generate_launch_description():
     # TODO(orduno) Substitute with `PushNodeRemapping`
     #              https://github.com/ros2/launch_ros/issues/56
     remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
+
+    # remappings = [('/tf', f'/{namespace.perform(context)}/tf'), ('/tf_static', f'/{namespace.perform(context)}/tf_static')]
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {'autostart': autostart}
@@ -128,9 +131,10 @@ def generate_launch_description():
         'map', default_value='', description='Full path to map yaml file to load'
     )
 
-    load_nodes = GroupAction(
+    load_nodes = GroupAction(        
         condition=IfCondition(PythonExpression(['not ', use_composition])),
         actions=[
+            PushRosNamespace(namespace),
             SetParameter('use_sim_time', use_sim_time),
             Node(
                 package='nav2_controller',
@@ -240,19 +244,19 @@ def generate_launch_description():
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
-                remappings=remappings,
+                remappings=remappings + [('cmd_vel', 'cmd_vel_nav')],
             ),
-            Node(
-                package='nav2_map_server',
-                executable='map_server',
-                name='map_server',
-                output='screen',
-                respawn=use_respawn,
-                respawn_delay=2.0,
-                parameters=[{'yaml_filename': map_yaml_file}],
-                arguments=['--ros-args', '--log-level', log_level],
-                remappings=remappings,
-            ),
+            # Node(
+            #     package='nav2_map_server',
+            #     executable='map_server',
+            #     name='map_server',
+            #     output='screen',
+            #     respawn=use_respawn,
+            #     respawn_delay=2.0,
+            #     parameters=[{'yaml_filename': map_yaml_file}],
+            #     arguments=['--ros-args', '--log-level', log_level],
+            #     remappings=remappings,
+            # ),
             Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
@@ -267,6 +271,7 @@ def generate_launch_description():
     load_composable_nodes = GroupAction(
         condition=IfCondition(use_composition),
         actions=[
+            PushRosNamespace(namespace),
             SetParameter('use_sim_time', use_sim_time),
             LoadComposableNodes(
                 target_container=container_name_full,
@@ -340,7 +345,7 @@ def generate_launch_description():
                         plugin='opennav_docking::DockingServer',
                         name='docking_server',
                         parameters=[configured_params],
-                        remappings=remappings,
+                        remappings=remappings + [('cmd_vel', 'cmd_vel_nav')],
                     ),
                     ComposableNode(
                         package='nav2_map_server',

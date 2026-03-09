@@ -132,24 +132,13 @@ def launch_setup(context, *args, **kwargs):
         SetRemap('/tf', '/' + namespace + '/tf'),
         SetRemap('/tf_static', '/' + namespace + '/tf_static'),
 
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(launch_map_server),
-        #     launch_arguments=[
-        #         ('use_sim_time', use_sim_time),
-        #         # ('params_file', rewritten_parameters),                
-        #         ('namespace', namespace),
-        #         ('autostart', autostart),
-        #         ('use_lifecycle_manager', use_lifecycle_manager),
-        #       ]
-        # ),
-
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(launch_nav2),
             launch_arguments=[
                 ('use_sim_time', use_sim_time),
                 ('params_file', rewritten_parameters),
-                ('use_composition', 'False'),
-                ('namespace', namespace),
+                ('use_composition', 'True'),
+                # ('namespace', namespace),
                 ('map',map_file),
                 ('autostart', autostart),
                 ('use_lifecycle_manager', use_lifecycle_manager),

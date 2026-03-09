@@ -116,8 +116,11 @@ def launch_setup(context, *args, **kwargs):
             launch_arguments=[
                 ('use_sim_time', use_sim_time),
                 ('params_file', rewritten_parameters),
-                ('use_composition', 'False'),
-                ('namespace', namespace)
+                ('use_composition', 'True'),
+                ('namespace', namespace),
+                ('use_intra_process_comms', 'True'),
+                ('autostart', 'True'),
+                ('log_level', 'debug')
               ]
         ),
     ])
