@@ -331,17 +331,22 @@ docking_server:
       plugin: 'opennav_docking::SimpleChargingDock'
       docking_threshold: 0.05
       staging_x_offset: -1.5
-      use_external_detection_pose: false
+      use_external_detection_pose: true
       use_battery_status: false # true
       use_stall_detection: false # true
 
       external_detection_timeout: 1.0
-      external_detection_translation_x: -0.18
-      external_detection_translation_y: 0.0
-      external_detection_rotation_roll: -1.57
-      external_detection_rotation_pitch: -1.57
+      # external_detection_translation_x: -0.18
+      # external_detection_translation_y: 0.0
+      # external_detection_rotation_roll: -1.57
+      # external_detection_rotation_pitch: -1.57
+      # external_detection_rotation_yaw: 0.0
+      external_detection_translation_x: -0.9
+      external_detection_translation_y: 0.04
+      external_detection_rotation_roll: 0.0
+      external_detection_rotation_pitch: 1.57
       external_detection_rotation_yaw: 0.0
-      filter_coef: 0.1
+      filter_coef: 0.3
 
     # Dock instances
     # The following example illustrates configuring dock instances.
@@ -356,14 +361,16 @@ docking_server:
     husky_charger:
       type: 'simple_charging_dock'
       frame: map
-      pose: [0.56, 1.624, 1.571]
+      pose: [0.50, 1.9, 1.571]
+      # pose: [0.56, 2.0, 1.571]
     controller:
-      k_phi: 3.0
-      k_delta: 2.0
+      k_phi: 2.0  # High heading error gain - maintain straight alignment
+      k_delta: 2.0  # Very low lateral gain - minimize curve corrections
       v_linear_min: 0.15
       v_linear_max: 0.15
-      v_angular_max: 0.25 # Maximum angular velocity
-      rotate_to_heading_max_angular_accel: 1.5 # Max angular acceleration (rad/s²). Default: 3.2
-      slowdown_radius: 0.25 # Radius to begin slowdown
-      projection_time: 1.0  # Projection timestep (s)
+      v_angular_max: 0.25  # Reduced for smoother, less jerky corrections
+      rotate_to_heading_max_angular_accel: 1.0  # Softer angular acceleration prevents oscillations
+      use_collision_detection: true
+      slowdown_radius: 0.8  # Increased for more gradual final approach
+      projection_time: 1.0  # Slightly increased for stability and lookahead
       dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3
