@@ -373,4 +373,5 @@ docking_server:
       use_collision_detection: true
       slowdown_radius: 0.8  # Increased for more gradual final approach
       projection_time: 1.0  # Slightly increased for stability and lookahead
+      # transform_tolerance: 0.1 # Time with which to post-date the transform that is published, to indicate that this transform is valid into the future.
       dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3
