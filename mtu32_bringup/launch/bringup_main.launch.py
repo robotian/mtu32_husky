@@ -107,11 +107,11 @@ def launch_setup(context, *args, **kwargs):
                 namespace=f'/{namespace}/sensors/lidar2d_0',
                 parameters=[
                     PathJoinSubstitution(
-                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "hokuyo_lidar_filter.yaml"]
+                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "lidar_filter.yaml"]
                     )
                 ],
                 remappings= remappings_tf,  
-                condition=IfCondition(PythonExpression(["'", platform_model, "' == 'a300'"])),
+                # condition=IfCondition(PythonExpression(["'", platform_model, "' == 'a300'"])),
             ),
 
             # mocap fake ekf node to provide filtered odometry for localization and navigation, using mocap ground truth as input
@@ -166,16 +166,16 @@ def launch_setup(context, *args, **kwargs):
                 condition=IfCondition(use_mocap_fake_localizer),
             ),  
 
-            Node(
-                package='depthimage_to_laserscan',
-                executable='depthimage_to_laserscan_node',
-                name='depthimage_to_laserscan',
-                namespace=f'/{namespace}',
-                remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'),
-                            ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
-                            ('scan', f'/{namespace}/sensors/camera_0/scan')],
-                parameters=[depth2scan_param_config]
-            ),  
+            # Node(
+            #     package='depthimage_to_laserscan',
+            #     executable='depthimage_to_laserscan_node',
+            #     name='depthimage_to_laserscan',
+            #     namespace=f'/{namespace}',
+            #     remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'),
+            #                 ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
+            #                 ('scan', f'/{namespace}/sensors/camera_0/scan')],
+            #     parameters=[depth2scan_param_config]
+            # ),  
 
             Node(
                 package='apriltag_ros',
@@ -191,14 +191,14 @@ def launch_setup(context, *args, **kwargs):
             ),
 
 
-            Node(
-                package='docking_utils',
-                name='tf2_pose_node',
-                executable='tf2_pose_node',
-                namespace=f'/{namespace}',
-                parameters=[tf2pose_config],
-                remappings=remappings_tf,
-            ),  
+            # Node(
+            #     package='docking_utils',
+            #     name='tf2_pose_node',
+            #     executable='tf2_pose_node',
+            #     namespace=f'/{namespace}',
+            #     parameters=[tf2pose_config],
+            #     remappings=remappings_tf,
+            # ),  
         ],
     )
     return [load_nodes]

@@ -6,7 +6,7 @@
     # 3: Use the local EKF (or odometry estimator), and use the Mocap data as a localizer             --> use_ekf: true in robot.yaml
     # 4: Use the Mocap data for the odometry and localization (For the Ground Truth based navigation) --> use_ekf: false in robot.yaml
 
-    mode: 4 
+    mode: 1 
 
     # 1. TF frame names
     mocap_odom_topic: "ground_truth/odom"  # The topic where the mocap odometry is published
