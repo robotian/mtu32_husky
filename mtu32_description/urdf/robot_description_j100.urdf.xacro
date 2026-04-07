@@ -5,11 +5,19 @@
 <!-- Add Mount Plates Link -->
 <link name="top_mount_link">
   <visual>
+    <origin xyz="0.067 0.024 0.124" rpy="1.5708 0.0 1.5708"/>
     <material name="clearpath_black"/>
     <geometry>
       <mesh filename="package://mtu32_description/meshes/jackal_top_assy_v1.stl"/>
     </geometry>
   </visual>
+
+  <collision>
+    <origin xyz="0.067 0.024 0.124" rpy="1.5708 0.0 1.5708"/>
+    <geometry>
+      <mesh filename="package://mtu32_description/meshes/jackal_top_assy_v1.stl"/>
+    </geometry>
+  </collision>
   <!-- <collision>
     <origin xyz="0 0.235 0.17" rpy="0 0 0"/>
     <geometry>
@@ -23,7 +31,8 @@
 <joint name="top_mount_joint" type="fixed">
   <child link="top_mount_link"/>
   <parent link="default_mount"/>
-  <origin xyz="0 0 0.02" rpy="0 0 0"/>
+  <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+  <!-- <origin xyz="0.067 0.024 0.124" rpy="1.5708 0.0 1.5708"/> -->
 </joint>
 
 <!-- camera_1 -->
