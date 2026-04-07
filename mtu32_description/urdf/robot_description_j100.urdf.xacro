@@ -1,10 +1,38 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+
+<!-- Add Mount Plates Link -->
+<link name="top_mount_link">
+  <visual>
+    <material name="clearpath_black"/>
+    <geometry>
+      <mesh filename="package://mtu32_description/meshes/top_mount_link.stl"/>
+    </geometry>
+  </visual>
+  <!-- <collision>
+    <origin xyz="0 0.235 0.17" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.17 0.05 0.145"/> #antenna box
+    </geometry>
+  </collision> -->
+</link>
+
+
+<!-- Add Mount Plates Joint -->
+<joint name="top_mount_joint" type="fixed">
+  <child link="top_mount_link"/>
+  <parent link="default_mount"/>
+  <origin xyz="0 0 0.02" rpy="0 0 0"/>
+</joint>
+
+<!-- camera_1 -->
 <xacro:include filename="$(find mtu32_description)/urdf/intel_realsense.urdf.xacro"/>
 <xacro:intel_realsense name="camera_1" parent_link="arm_0_end_effector_link" update_rate="30" image_height="480" image_width="640" model="d405">
     <origin xyz="0.045 0.0 0.0" rpy="0.0 0.0 0.0"/>
     <!-- <origin xyz="0.055 -0.02 0.02" rpy="-1.5708 0.0 0.0"/> -->
-  </xacro:intel_realsense>
+</xacro:intel_realsense>
+
+
 
 </robot>
