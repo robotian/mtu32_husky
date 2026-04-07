@@ -7,7 +7,7 @@
   <visual>
     <material name="clearpath_black"/>
     <geometry>
-      <mesh filename="package://mtu32_description/meshes/top_mount_link.stl"/>
+      <mesh filename="package://mtu32_description/meshes/jackal_top_assy_v1.stl"/>
     </geometry>
   </visual>
   <!-- <collision>
