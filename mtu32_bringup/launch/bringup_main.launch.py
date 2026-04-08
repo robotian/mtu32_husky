@@ -191,14 +191,14 @@ def launch_setup(context, *args, **kwargs):
             ),
 
 
-            # Node(
-            #     package='docking_utils',
-            #     name='tf2_pose_node',
-            #     executable='tf2_pose_node',
-            #     namespace=f'/{namespace}',
-            #     parameters=[tf2pose_config],
-            #     remappings=remappings_tf,
-            # ),  
+            Node(
+                package='docking_utils',
+                name='tf2_pose_node',
+                executable='tf2_pose_node',
+                namespace=f'/{namespace}',
+                parameters=[tf2pose_config],
+                remappings=remappings_tf,
+            ),  
         ],
     )
     return [load_nodes]
