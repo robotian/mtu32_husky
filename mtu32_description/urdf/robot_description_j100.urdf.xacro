@@ -8,14 +8,14 @@
     <origin xyz="0.067 0.025 0.095" rpy="1.5708 0.0 1.5708"/>
     <material name="clearpath_black"/>
     <geometry>
-      <mesh filename="package://mtu32_description/meshes/jackal_top_assy_v1.stl"/>
+      <mesh filename="package://mtu32_description/meshes/top_assy_duro_ant.stl"/>
     </geometry>
   </visual>
 
   <collision>
     <origin xyz="0.067 0.025 0.095" rpy="1.5708 0.0 1.5708"/>
     <geometry>
-      <mesh filename="package://mtu32_description/meshes/jackal_top_assy_v1.stl"/>
+      <mesh filename="package://mtu32_description/meshes/top_assy_duro_ant.stl"/>
     </geometry>
   </collision>
 </link>
