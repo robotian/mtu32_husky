@@ -371,7 +371,7 @@ docking_server:
     simple_charging_dock:
       plugin: 'opennav_docking::SimpleChargingDock'
       docking_threshold: 0.05 # Distance to consider the robot docked
-      staging_x_offset: -0.7
+      staging_x_offset: -0.5
       use_external_detection_pose: true
       use_battery_status: false # true
       use_stall_detection: false # true

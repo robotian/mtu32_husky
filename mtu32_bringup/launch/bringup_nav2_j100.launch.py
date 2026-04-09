@@ -135,10 +135,13 @@ def launch_setup(context, *args, **kwargs):
     # see if we've overridden the scan_topic
     eval_scan_topic = scan_topic.perform(context)
     if len(eval_scan_topic) == 0:
-        if platform_model == 'j100_1':
-            eval_scan_topic = f'/{namespace}/sensors/camera_0/scan'
-        else:
-            eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan_filtered'
+        eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan_filtered'
+        # if platform_model == 'j100_1':
+        #     eval_scan_topic = f'/{namespace}/sensors/camera_0/scan'
+        # else:
+        #     eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan_filtered'
+    
+    params_file = PathJoinSubstitution([get_package_share_directory('mtu32_bringup'), 'config', f'{platform_model}', 'nav2.yaml'])
 
     params_file = RewrittenYaml(
         source_file=params_file,
