@@ -107,11 +107,11 @@ def launch_setup(context, *args, **kwargs):
                 namespace=f'/{namespace}/sensors/lidar2d_0',
                 parameters=[
                     PathJoinSubstitution(
-                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "hokuyo_lidar_filter.yaml"]
+                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "lidar_filter.yaml"]
                     )
                 ],
                 remappings= remappings_tf,  
-                condition=IfCondition(PythonExpression(["'", platform_model, "' == 'a300'"])),
+                # condition=IfCondition(PythonExpression(["'", platform_model, "' == 'a300'"])),
             ),
 
             # mocap fake ekf node to provide filtered odometry for localization and navigation, using mocap ground truth as input
