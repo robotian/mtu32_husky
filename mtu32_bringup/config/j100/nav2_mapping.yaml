@@ -51,13 +51,13 @@ controller_server:
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
-      vx_max: 0.5
-      vx_min: -0.35
+      vx_max: 0.2
+      vx_min: -0.2
       vy_max: 0.5
-      wz_max: 1.0
+      wz_max: 0.3
       iteration_count: 1
       prune_distance: 1.7
-      transform_tolerance: 0.5
+      transform_tolerance: 0.1
       temperature: 0.3
       gamma: 0.015
       motion_model: "DiffDrive"
@@ -139,13 +139,13 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-      transform_tolerance: 0.5
       width: 5
       height: 5
       resolution: 0.06
       footprint: "[ [0.254, 0.2159], [0.254, -0.2159], [-0.254, -0.2159], [-0.254, 0.2159] ]"
       always_send_full_costmap: true
-      plugins: ["static_layer", "voxel_layer", "inflation_layer"]
+      # plugins: ["static_layer", "voxel_layer", "inflation_layer"]
+      plugins: ["voxel_layer", "inflation_layer"] # for map building, we don't need static layer, but for navigation, we need static layer
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0
@@ -182,25 +182,23 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      transform_tolerance: 0.5
       footprint: "[ [0.254, 0.2159], [0.254, -0.2159], [-0.254, -0.2159], [-0.254, 0.2159] ]"
       resolution: 0.06
       # track_unknown_space: true
       # always_send_full_costmap: true
       
       # Crucial Settings for Mapping without a pre-loaded map
-      # rolling_window: false
+      rolling_window: false
       track_unknown_space: true
       always_send_full_costmap: true
       # Define the bounding box of your GPS operational area (in meters)
-      # width: 100
-      # height: 100
-      # resolution: 0.05
-      # origin_x: -50.0
-      # origin_y: -50.0
-      # origin: [-50.0, -50.0, 0.0] # Centers the map around your starting GPS point
+      width: 100
+      height: 100
+      resolution: 0.05
+      origin_x: -50.0
+      origin_y: -50.0
 
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -215,9 +213,6 @@ global_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0
@@ -238,7 +233,7 @@ planner_server:
       tolerance: 0.1                      # tolerance for planning if unable to reach exact pose, in meters
       downsample_costmap: false           # whether or not to downsample the map
       downsampling_factor: 1              # multiplier for the resolution of the costmap layer (e.g. 2 on a 5cm costmap would be 10cm)
-      allow_unknown: false                # allow traveling in unknown space
+      allow_unknown: true                # allow traveling in unknown space
       max_iterations: 1000000             # maximum total iterations to search for before failing (in case unreachable), set to -1 to disable
       max_on_approach_iterations: 1000    # maximum number of iterations to attempt to reach goal once in tolerance
       terminal_checking_interval: 5000     # number of iterations between checking if the goal has been cancelled or planner timed out
@@ -301,7 +296,7 @@ behavior_server:
     global_frame: map
     local_frame: odom
     robot_base_frame: base_link
-    transform_tolerance: 0.5
+    transform_tolerance: 0.1
     enable_stamped_cmd_vel: true
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
@@ -343,7 +338,7 @@ collision_monitor:
     cmd_vel_in_topic: "cmd_vel_smoothed"
     cmd_vel_out_topic: "cmd_vel"
     state_topic: "collision_monitor_state"
-    transform_tolerance: 0.5
+    transform_tolerance: 0.2
     source_timeout: 1.0
     base_shift_correction: True
     stop_pub_timeout: 2.0
@@ -362,7 +357,7 @@ collision_monitor:
     observation_sources: ["scan"]
     scan:
       type: "scan"
-      topic: "sensors/lidar2d_0/scan_filtered"
+      topic: "sensors/lidar2d_0/scan"
       min_height: 0.15
       max_height: 2.0
       enabled: True
@@ -382,17 +377,26 @@ docking_server:
     dock_backwards: false
     dock_prestaging_tolerance: 0.1
 
+    # --- ADDED: Dock Database Configuration ---
+    dock_database:
+      file_path: "" # Leave empty if you define docks directly in YAML below
+
+    # --- ADDED: Footprint Approach Plugin Configuration ---
+    FootprintApproach:
+      plugin: "opennav_docking::FootprintApproach"
+      max_points: 50 # Number of footprint interpolation points along approach path
+
     # Types of docks
     dock_plugins: ['simple_charging_dock']
     simple_charging_dock:
       plugin: 'opennav_docking::SimpleChargingDock'
       docking_threshold: 0.05 # Distance to consider the robot docked
-      staging_x_offset: -0.8
+      staging_x_offset: -0.5
       use_external_detection_pose: true
-      use_battery_status: false # true
-      use_stall_detection: false # true
+      use_battery_status: false
+      use_stall_detection: false
 
-      external_detection_timeout: 3.0
+      external_detection_timeout: 1.0
       external_detection_translation_x: -0.28
       external_detection_translation_y: 0.08
       external_detection_rotation_roll: 0.0
@@ -400,20 +404,77 @@ docking_server:
       external_detection_rotation_yaw: 0.0
       filter_coef: 0.1
 
-    # Dock server
-    docks: ['jackal_charger']  # Input your docks here
+    # Dock instances
+    docks: ['jackal_charger']
     jackal_charger:
       type: 'simple_charging_dock'
       frame: map
       pose: [-1.00, -3.54, -1.5708]
-      # pose: [0.0, 0.0, -1.5708]
+
     controller:
-      k_phi: 1.5   # Heading error gain. How aggressively the robot corrects its angle relative to the dock.
-      k_delta: 2.0 # Lateral error gain. How aggressively the robot steers back onto the center line.
+      k_phi: 1.5
+      k_delta: 2.0
       v_linear_min: 0.1
       v_linear_max: 0.12
-      v_angular_max: 0.25 # Maximum angular velocity
-      rotate_to_heading_max_angular_accel: 1.5 # Max angular acceleration (rad/s²). Default: 3.2
-      slowdown_radius: 0.25 # Radius to begin slowdown
-      projection_time: 1.0  # Projection timestep (s)
-      dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3
+      v_angular_max: 0.25
+      rotate_to_heading_max_angular_accel: 1.5
+      slowdown_radius: 0.25
+      projection_time: 1.0
+      dock_collision_threshold: 2.0
+      
+# docking_server:
+#   ros__parameters:
+#     enable_stamped_cmd_vel: true
+#     controller_frequency: 50.0
+#     initial_perception_timeout: 5.0
+#     wait_charge_timeout: 5.0
+#     dock_approach_timeout: 30.0
+#     undock_linear_tolerance: 0.05
+#     undock_angular_tolerance: 0.1
+#     max_retries: 3
+#     base_frame: "base_link"
+#     fixed_frame: "odom"
+#     dock_backwards: false
+#     dock_prestaging_tolerance: 0.1
+
+#     # Types of docks
+#     dock_plugins: ['simple_charging_dock']
+#     simple_charging_dock:
+#       plugin: 'opennav_docking::SimpleChargingDock'
+#       docking_threshold: 0.05 # Distance to consider the robot docked
+#       staging_x_offset: -0.5
+#       use_external_detection_pose: true
+#       use_battery_status: false # true
+#       use_stall_detection: false # true
+
+#       external_detection_timeout: 1.0
+#       external_detection_translation_x: -0.28
+#       external_detection_translation_y: 0.08
+#       external_detection_rotation_roll: 0.0
+#       external_detection_rotation_pitch: 1.57
+#       external_detection_rotation_yaw: 0.0
+#       filter_coef: 0.1
+
+#     # Dock instances
+#     # The following example illustrates configuring dock instances.
+#     # docks: ['home_dock']  # Input your docks here
+#     # home_dock:
+#     #   type: 'simple_charging_dock'
+#     #   frame: map
+#     #   pose: [0.0, 0.0, 0.0]
+#     # Jackal Charging dock
+#     docks: ['jackal_charger']  # Input your docks here
+#     jackal_charger:
+#       type: 'simple_charging_dock'
+#       frame: map
+#       pose: [-1.57, 0.0, 3.141592]
+#     controller:
+#       k_phi: 1.5   # Heading error gain. How aggressively the robot corrects its angle relative to the dock.
+#       k_delta: 2.0 # Lateral error gain. How aggressively the robot steers back onto the center line.
+#       v_linear_min: 0.1
+#       v_linear_max: 0.12
+#       v_angular_max: 0.25 # Maximum angular velocity
+#       rotate_to_heading_max_angular_accel: 1.5 # Max angular acceleration (rad/s²). Default: 3.2
+#       slowdown_radius: 0.25 # Radius to begin slowdown
+#       projection_time: 1.0  # Projection timestep (s)
+#       dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3

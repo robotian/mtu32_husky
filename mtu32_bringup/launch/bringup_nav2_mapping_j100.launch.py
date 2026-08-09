@@ -47,11 +47,11 @@ ARGUMENTS = [
         'slam', default_value='False', description='Whether run a SLAM'
     ),
     DeclareLaunchArgument(
-        'map', default_value=os.path.join(get_package_share_directory('mtu32_bringup'), 'map', 'robindale_front_1.yaml'), 
+        'map', default_value=os.path.join(get_package_share_directory('mtu32_bringup'), 'map', 'mocap_space1.yaml'), 
         description='Full path to map yaml file to load'
     ), 
     DeclareLaunchArgument(
-        'use_localization', default_value='False',
+        'use_localization', default_value='True',
         description='Whether to enable localization or not'
     ),
     DeclareLaunchArgument(
@@ -137,7 +137,7 @@ def launch_setup(context, *args, **kwargs):
     if len(eval_scan_topic) == 0:
         eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan_filtered'  # both robots are using lidar sensors for navigation, so default to that if no override is provided
     
-    params_file = PathJoinSubstitution([get_package_share_directory('mtu32_bringup'), 'config', f'{platform_model}', 'nav2.yaml'])
+    params_file = PathJoinSubstitution([get_package_share_directory('mtu32_bringup'), 'config', f'{platform_model}', 'nav2_mapping.yaml'])
 
     params_file = RewrittenYaml(
         source_file=params_file,
@@ -208,22 +208,22 @@ def launch_setup(context, *args, **kwargs):
                     'container_name': 'nav2_container',
                 }.items(),
             ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(mtu_launch_dir, 'map_server_only.launch.py')
-                ),
-                # condition=IfCondition(PythonExpression(['not ', slam, ' and ', use_localization])),
-                launch_arguments={
-                    'namespace': namespace,
-                    'map': map_yaml_file,
-                    'use_sim_time': use_sim_time,
-                    'autostart': autostart,
-                    'params_file': params_file,
-                    'use_composition': use_composition,
-                    'use_respawn': use_respawn,
-                    'container_name': 'nav2_container',
-                }.items(),
-            ),
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource(
+            #         os.path.join(mtu_launch_dir, 'map_server_only.launch.py')
+            #     ),
+            #     # condition=IfCondition(PythonExpression(['not ', slam, ' and ', use_localization])),
+            #     launch_arguments={
+            #         'namespace': namespace,
+            #         'map': map_yaml_file,
+            #         'use_sim_time': use_sim_time,
+            #         'autostart': autostart,
+            #         'params_file': params_file,
+            #         'use_composition': use_composition,
+            #         'use_respawn': use_respawn,
+            #         'container_name': 'nav2_container',
+            #     }.items(),
+            # ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(launch_dir, 'navigation_launch.py')

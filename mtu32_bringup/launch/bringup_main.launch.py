@@ -40,7 +40,7 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_lifecycle_manager', default_value='false',
                           choices=['true', 'false'],
                           description='Enable bond connection during node activation'),    
-    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='true',
+    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='false',
                           choices=['true', 'false'],
                           description=''),
     # DeclareLaunchArgument('use_composition_nav',
@@ -115,41 +115,41 @@ def launch_setup(context, *args, **kwargs):
             ),
 
             # mocap fake ekf node to provide filtered odometry for localization and navigation, using mocap ground truth as input
-            Node(
-                package='mocap_fake_localizer',  # tf: odom -> base_link
-                executable='mocap_fake_ekf_node',
-                name='mocap_fake_ekf_node',
-                output='screen',
-                namespace=f'/{namespace}',
-                parameters=[
-                    {'mocap_odom_topic': 'ground_truth/odom'},
-                ],
-                remappings= remappings_tf  + [('odom_filtered', 'platform/odom_filtered')],        
-                condition=UnlessCondition(use_mocap_fake_localizer),
-            ),            
+            # Node(
+            #     package='mocap_fake_localizer',  # tf: odom -> base_link
+            #     executable='mocap_fake_ekf_node',
+            #     name='mocap_fake_ekf_node',
+            #     output='screen',
+            #     namespace=f'/{namespace}',
+            #     parameters=[
+            #         {'mocap_odom_topic': 'ground_truth/odom'},
+            #     ],
+            #     remappings= remappings_tf  + [('odom_filtered', 'platform/odom_filtered')],        
+            #     condition=UnlessCondition(use_mocap_fake_localizer),
+            # ),            
 
             # # static transform from mocap frame to map frame, since mocap provides ground truth in the map frame
-            Node(
-                package='tf2_ros', # tf: base_mocap -> map
-                executable='static_transform_publisher',
-                name='static_tf_mocap2map_publisher',
-                namespace=f'/{namespace}',
-                output='screen',
-                arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
-                remappings = remappings_tf,
-                condition=UnlessCondition(use_mocap_fake_localizer),
-            ),
+            # Node(
+            #     package='tf2_ros', # tf: base_mocap -> map
+            #     executable='static_transform_publisher',
+            #     name='static_tf_mocap2map_publisher',
+            #     namespace=f'/{namespace}',
+            #     output='screen',
+            #     arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
+            #     remappings = remappings_tf,
+            #     condition=UnlessCondition(use_mocap_fake_localizer),
+            # ),
             # static transform from map frame to odom frame, since mocap provides ground truth in the map frame and we want to use that as our odometry source for localization and navigation
-            Node(
-                package='tf2_ros', # tf: map -> odom
-                executable='static_transform_publisher',
-                name='static_tf_map2odom_publisher',
-                namespace=f'/{namespace}',
-                output='screen',
-                arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-                remappings = remappings_tf,
-                condition=UnlessCondition(use_mocap_fake_localizer),
-            ),
+            # Node(
+            #     package='tf2_ros', # tf: map -> odom
+            #     executable='static_transform_publisher',
+            #     name='static_tf_map2odom_publisher',
+            #     namespace=f'/{namespace}',
+            #     output='screen',
+            #     arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+            #     remappings = remappings_tf,
+            #     condition=UnlessCondition(use_mocap_fake_localizer),
+            # ),
 
             Node(
                 package='mocap_fake_localizer', # tf: map -> odom

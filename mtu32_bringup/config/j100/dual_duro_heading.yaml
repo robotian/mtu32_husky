@@ -1,0 +1,154 @@
+# j100_0921/sensors/gps_1:
+/**/att_duro_node:
+  ros__parameters:
+
+    # SwiftNav GNSS Receiver Interface
+    interface: 1 # 1: TCP Client, 2: Serial, 3: File
+
+    # TCP Client (interface: 1)
+    host_ip: "192.168.131.31"
+    host_port: 55555
+    read_timeout: 2000  # [ms]
+    write_timeout: 2000 # [ms]
+
+    # Serial (interface: 2)
+    device_name: "/dev/ttyUSB0"
+    connection_str: "115200|N|8|1|N"
+
+    # File (interface: 3)
+    sbp_file: "/home/swiftnav/ros2logs/sample-drive.sbp"
+
+    # ROS2 Frame Name
+    frame_name: "gps_1_link"
+    imu_frame_name: "gps_1_imu_link"
+
+    # Topic Publication Time Stamp Source
+    timestamp_source_gnss: False # True: use GNSS receiver reported time (default), False: use current platfrom time
+
+    # RTK Baseline Direction Offsets (Baseline Topic)
+    baseline_dir_offset_deg: 0.0    # [deg], range [-180 to 180]
+    baseline_dip_offset_deg: 0.0    # [deg], range [-90 to 90]
+
+    # Mininal Speed For Track Updates From SBP Message VEL NED COV (GPSFix Topic)
+    track_update_min_speed_mps: 0.2 # [m/s], Track and track error outputs are 'frozen' below this threshold.
+
+    # Publishers
+    enabled_publishers:
+      [
+        # "gpsfix",
+        #"navsatfix",
+        #"twistwithcovariancestamped",
+        "baseline",
+        #"timereference",
+        #"imu"
+      ]
+
+    # SBP Logging
+    log_sbp_messages: False
+    log_sbp_filepath: "/home/swiftnav/ros2logs"
+
+
+
+/**/ref_duro_node:
+  ros__parameters:
+
+    # SwiftNav GNSS Receiver Interface
+    interface: 1 # 1: TCP Client, 2: Serial, 3: File
+
+    # TCP Client (interface: 1)
+    host_ip: "192.168.131.32"
+    host_port: 55555
+    read_timeout: 2000  # [ms]
+    write_timeout: 2000 # [ms]
+
+    # Serial (interface: 2)
+    device_name: "/dev/ttyUSB0"
+    connection_str: "115200|N|8|1|N"
+
+    # File (interface: 3)
+    sbp_file: "/home/swiftnav/ros2logs/sample-drive.sbp"
+
+    # ROS2 Frame Name
+    frame_name: "gps_2_link"
+    imu_frame_name: "gps_2_imu_link"
+
+    # Topic Publication Time Stamp Source
+    timestamp_source_gnss: False # True: use GNSS receiver reported time (default), False: use current platfrom time
+
+    # RTK Baseline Direction Offsets (Baseline Topic)
+    baseline_dir_offset_deg: 0.0    # [deg], range [-180 to 180]
+    baseline_dip_offset_deg: 0.0    # [deg], range [-90 to 90]
+
+    # Mininal Speed For Track Updates From SBP Message VEL NED COV (GPSFix Topic)
+    track_update_min_speed_mps: 0.2 # [m/s], Track and track error outputs are 'frozen' below this threshold.
+
+    # Publishers
+    enabled_publishers:
+      [
+        # "gpsfix",
+        "navsatfix",
+        "twistwithcovariancestamped",
+        "baseline",
+        # "timereference",
+        #"imu"
+      ]
+
+    # SBP Logging
+    log_sbp_messages: False
+    log_sbp_filepath: "/home/swiftnav/ros2logs"
+
+/**/navsat_transform:
+  ros__parameters:
+    frequency: 10.0
+    delay: 5.0
+    magnetic_declination_radians: 0.0 # Duro output is already true North relative
+    yaw_offset: 0.0 
+    zero_altitude: true
+    publish_filtered_gps: false
+    use_odometry_yaw: false
+    wait_for_datum: true
+    use_local_cartesian: false   # default is false
+    # datum: [47.11259312836819, -88.59854714848892, 0.0]  #Robindale
+    datum: [47.11280161656325, -88.59839843657778, 0.0]  #Robindale driveway
+
+/**/ekf_global_node:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+
+    world_frame: map
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    print_diagnostics: true
+
+    # GPS Position Input (from navsat_transform)
+    odom0: odometry/gps
+    odom0_config: [true,  true,  false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+
+    odom1: platform/odom
+    odom1_config: [True, True, False, False, False, True, True, True, False, False, False, True, False, False, False]
+    odom1_differential: True
+    odom1_queue_size: 10
+
+    # Dual-Antenna Heading Input (from your Python script)
+    imu0: sensors/gps_1/heading_imu
+    imu0_config: [false, false, false,
+                  false, false, true,  # Takes Yaw orientation
+                  false, false, false,
+                  false, false, false,
+                  false, false, false]
+    
+    imu1: sensors/imu_1/data
+    imu1_config: [false, false, false,
+                  false, false, false,  
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu1_differential: true
+    imu1_queue_size: 10

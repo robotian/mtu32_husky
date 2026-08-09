@@ -1,0 +1,82 @@
+# slam_toolbox_gps.yaml
+/**/slam_toolbox:
+  ros__parameters:
+    # --- Frame & Topic Configurations ---
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    scan_topic: /j100_0921/sensors/lidar2d_0/scan_filtered
+    mode: mapping
+
+    # --- CRITICAL FOR RTK GPS EKF INTEGRATION ---
+    # Setting transform_publish_period to 0.0 stops slam_toolbox from publishing map -> odom TF.
+    # Your global EKF (robot_localization + RTK GPS) will publish map -> odom instead.
+    transform_publish_period: 0.0
+
+    # --- Mapping Performance Tuning ---
+    map_update_interval: 1.0
+    resolution: 0.05               # Grid cell size in meters (5cm)
+    max_laser_range: 20.0          # Max range to use laser points for mapping
+    minimum_time_interval: 0.2
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.0
+
+    # --- Scan Matcher Optimization ---
+    use_scan_matching: false
+    use_scan_barycenter: true
+    minimum_travel_distance: 0.2    # Distance to move before adding new scan to graph
+    minimum_travel_heading: 0.15    # Radians turned before adding new scan to graph
+    
+    # --- Solver & Graph Parameters ---
+    solver_plugin: solver_plugins::CeresSolver
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    ceres_preconditioner: SCHUR_JACOBI
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    ceres_loss_function: None
+    stack_size_to_use: 50000000 # Program needs a larger stack size to serialize large maps
+
+    # --- Loop Closure & Frontier Exploration Support ---
+    do_loop_closing: true
+    loop_search_maximum_distance: 3.0
+    enable_interactive_mode: true
+
+    # Ensure position initialization pulls from the TF tree
+    map_file_name: ""  # Name of the map file to save/load
+    use_map_file: false         # Whether to load an existing map file
+    use_map_saver: true
+
+    debug_logging: true
+    publish_tf: false
+    
+
+    # map_start_pose: [1.0, 0.0, 0.0] # [x, y, theta] in meters and radians
+    # map_start_at_dock: false
+
+
+# /**/slam_toolbox:
+#   ros__parameters:
+#     # --- Frame Configurations ---
+#     # Match EXACTLY what 'ros2 run tf2_ros tf2_echo map base_link' reports
+#     odom_frame: odom
+#     map_frame: map
+#     base_frame: base_link
+#     scan_topic: /j100_0921/sensors/lidar2d_0/scan_filtered
+#     mode: mapping
+#     # use_bond: true
+
+#     # --- CRITICAL: MUST BE 0.0 TO STOP SLAM FROM OVERWRITING EKF TF ---
+#     transform_publish_period: 0.0
+
+#     # Increase TF buffer lookup tolerances for RTK GPS EKF
+#     transform_timeout: 1.0
+#     tf_buffer_duration: 30.0
+
+#     # --- Solver Configurations ---
+#     solver_plugin: solver_plugins::CeresSolver
+#     ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+#     ceres_preconditioner: SCHUR_JACOBI
+#     ceres_trust_strategy: LEVENBERG_MARQUARDT
+#     ceres_dogleg_type: TRADITIONAL_DOGLEG
+#     ceres_loss_function: None
+#     stack_size_to_use: 40000000

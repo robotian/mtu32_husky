@@ -1,0 +1,78 @@
+/**/ref_duro_node:
+  ros__parameters:
+
+    # SwiftNav GNSS Receiver Interface
+    interface: 1 # 1: TCP Client, 2: Serial, 3: File
+
+    # TCP Client (interface: 1)
+    host_ip: "192.168.131.32"
+    host_port: 55555
+    read_timeout: 2000  # [ms]
+    write_timeout: 2000 # [ms]
+
+    # Serial (interface: 2)
+    device_name: "/dev/ttyUSB0"
+    connection_str: "115200|N|8|1|N"
+
+    # File (interface: 3)
+    sbp_file: "/home/swiftnav/ros2logs/sample-drive.sbp"
+
+    # ROS2 Frame Name
+    frame_name: "gps_2_link"
+    imu_frame_name: "gps_2_imu_link"
+
+    # Topic Publication Time Stamp Source
+    timestamp_source_gnss: False # True: use GNSS receiver reported time (default), False: use current platfrom time
+
+    # RTK Baseline Direction Offsets (Baseline Topic)
+    baseline_dir_offset_deg: 0.0    # [deg], range [-180 to 180]
+    baseline_dip_offset_deg: 0.0    # [deg], range [-90 to 90]
+
+    # Mininal Speed For Track Updates From SBP Message VEL NED COV (GPSFix Topic)
+    track_update_min_speed_mps: 0.2 # [m/s], Track and track error outputs are 'frozen' below this threshold.
+
+    # Publishers
+    enabled_publishers:
+      [
+        # "gpsfix",
+        "navsatfix",
+        "twistwithcovariancestamped",
+        "baseline",
+        # "timereference",
+        #"imu"
+      ]
+
+    # SBP Logging
+    log_sbp_messages: False
+    log_sbp_filepath: "/home/swiftnav/ros2logs"
+
+
+# /**/ref_duro_complementary_filter__node:
+#   ros__parameters:
+#     gain_acc: 0.01
+#     gain_mag: 0.01
+#     bias_alpha: 0.01
+#     do_bias_estimation: true
+#     do_adaptive_gain: true
+#     use_mag: false
+#     fixed_frame: "odom"
+#     publish_tf: false
+#     reverse_tf: false
+#     constant_dt: 0.0
+#     publish_debug_topics: false
+
+    # qos_overrides:
+    #   /imu/data_raw:
+    #     subscription:
+    #       depth: 10
+    #       durability: volatile
+    #       history: keep_last
+    #       reliability: reliable
+
+    #   /imu/mag:
+    #     subscription:
+    #       depth: 10
+    #       durability: volatile
+    #       history: keep_last
+    #       reliability: reliable
+
