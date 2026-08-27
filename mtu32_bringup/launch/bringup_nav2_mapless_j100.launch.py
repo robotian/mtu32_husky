@@ -135,7 +135,8 @@ def launch_setup(context, *args, **kwargs):
     # see if we've overridden the scan_topic
     eval_scan_topic = scan_topic.perform(context)
     if len(eval_scan_topic) == 0:
-        eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan_filtered'  # both robots are using lidar sensors for navigation, so default to that if no override is provided
+        eval_scan_topic = f'/{namespace}/sensors/camera_0/scan' 
+        # eval_scan_topic = f'/{namespace}/sensors/lidar2d_0/scan_filtered'  # both robots are using lidar sensors for navigation, so default to that if no override is provided
     
     params_file = PathJoinSubstitution([get_package_share_directory('mtu32_bringup'), 'config', f'{platform_model}', 'nav2_mapless.yaml'])
 

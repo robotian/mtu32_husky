@@ -166,16 +166,16 @@ def launch_setup(context, *args, **kwargs):
                 condition=IfCondition(use_mocap_fake_localizer),
             ),  
 
-            # Node(
-            #     package='depthimage_to_laserscan',
-            #     executable='depthimage_to_laserscan_node',
-            #     name='depthimage_to_laserscan',
-            #     namespace=f'/{namespace}',
-            #     remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'),
-            #                 ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
-            #                 ('scan', f'/{namespace}/sensors/camera_0/scan')],
-            #     parameters=[depth2scan_param_config]
-            # ),  
+            Node(
+                package='depthimage_to_laserscan',
+                executable='depthimage_to_laserscan_node',
+                name='depthimage_to_laserscan',
+                namespace=f'/{namespace}',
+                remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'),
+                            ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
+                            ('scan', f'/{namespace}/sensors/camera_0/scan')],
+                parameters=[depth2scan_param_config]
+            ),  
 
             Node(
                 package='apriltag_ros',

@@ -48,7 +48,7 @@ j100_0921/sensors/camera_1:
       diagnostics_period: 0.0
       publish_tf: True
       tf_publish_rate: 0.0
-      pointcloud.enable: False
+      pointcloud.enable: True
       pointcloud.stream_filter: 2
       pointcloud.stream_index_filter: 0
       pointcloud.ordered_pc: False
