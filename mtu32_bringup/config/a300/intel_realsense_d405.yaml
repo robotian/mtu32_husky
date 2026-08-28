@@ -1,3 +1,30 @@
+# Tuned D405 config for a300_00036 camera_1. Derived from intel_realsense_d405.yaml,
+# which is kept unmodified as the fallback (neither file is under version control).
+#
+# QUALITY MARKERS
+#   [IMG]   affects colour image quality
+#   [DEPTH] affects depth quality
+#   [BOTH]  affects both
+#   Unmarked lines are identity, plumbing or stream selection with no quality effect.
+#
+# THE D405 HAS ONE SENSOR. Colour, depth and infra all come off a single
+# "Stereo Module". Exposure, gain and white balance are therefore shared: any
+# exposure change made for the colour image also changes depth quality. That is
+# why most sensor controls below are marked [BOTH] rather than [IMG].
+#
+# TWO THINGS NO PARAMETER FIXES
+#   1. Magenta cast: ambient near-IR reaching the imagers through the D405's
+#      absent IR-cut filter. The device exposes no emitter or laser control, so
+#      this is optical. White balance moves the blue/amber axis only and cannot
+#      correct a green/magenta tint. Reduce depth_module.saturation to mute it;
+#      0 gives greyscale and removes it entirely.
+#   2. Light budget: ambient-only night with a moving robot is roughly 16x short
+#      on photons against ~15.5x of available gain. Expect consistent and sharp,
+#      not bright. Adding illumination is the only real fix.
+#
+# Parameter names verified against a live D405's 215-parameter list
+# (FW 5.17.0.10, realsense2_camera 4.58.1, ROS 2 Jazzy).
+
 a300_00036/sensors/camera_1:
   intel_realsense:
     ros__parameters:
@@ -13,54 +40,105 @@ a300_00036/sensors/camera_1:
       rosbag_filename: ''
       log_level: info
       output: screen
+
+      # ---- Colour stream --------------------------------------------------
       enable_color: true
-      rgb_camera.color_profile: 848,480,30
-      rgb_camera.color_format: RGB8
-      rgb_camera.enable_auto_exposure: true
+      # Was rgb_camera.color_profile / .color_format. The D405 declares no
+      # rgb_camera.* parameter at all -- such keys load without error and are
+      # then ignored, which is why earlier edits never changed the image.
+      # rgb_camera.enable_auto_exposure is dropped rather than renamed;
+      # depth_module.enable_auto_exposure below governs the same sensor.
+      depth_module.color_profile: 848,480,30   # [IMG] resolution and frame rate
+      depth_module.color_format: RGB8          # [IMG] pixel format
+
+      # ---- Depth and infra streams ----------------------------------------
       enable_depth: true
       enable_infra: false
-      enable_infra1: false
+      enable_infra1: false                     # [-] mono Y8; better low-light SNR if ever needed
       enable_infra2: false
-      depth_module.depth_profile: 848,480,15
-      depth_module.depth_format: Z16
+      depth_module.depth_profile: 848,480,15   # [DEPTH] resolution and frame rate
+      depth_module.depth_format: Z16           # [DEPTH]
       depth_module.infra_profile: 0,0,0
       depth_module.infra_format: RGB8
       depth_module.infra1_format: Y8
       depth_module.infra2_format: Y8
-      depth_module.exposure: 8500
-      depth_module.gain: 16
-      depth_module.hdr_enabled: false
-      depth_module.enable_auto_exposure: true
-      depth_module.saturation: 64
-      depth_module.exposure.1: 7500
-      depth_module.gain.1: 16
-      depth_module.exposure.2: 1
-      depth_module.gain.2: 16
-      enable_sync: false
+
+      # ---- Shared sensor exposure and gain ---------------------------------
+      # Inert while enable_auto_exposure is true; kept as the manual fallback.
+      depth_module.exposure: 8500              # [BOTH] microseconds, range 1-165000
+      depth_module.gain: 16                    # [BOTH] range 16-248
+      depth_module.enable_auto_exposure: true  # [BOTH]
+      # Exposure ceiling, set from a motion-blur budget rather than a light one,
+      # so it applies day and night. 848 px across ~87 deg HFOV is ~0.10 deg/px.
+      # Driving 0.5 m/s past a subject at 2 m sweeps ~140 px/s; yawing 0.5 rad/s
+      # sweeps ~280 px/s. Both pass 2 px of smear beyond ~10 ms.
+      # ASSUMED SPEEDS -- measure the platform before trusting this number.
+      # In daylight auto-exposure settles near 100-1000 us, so the cap never
+      # engages. It only binds in low light, and there it costs depth fill:
+      # shorter exposure means fewer stereo matches and a sparser cloud.
+      # The toggle must be true or the limit value is ignored.
+      depth_module.auto_exposure_limit_toggle: true   # [BOTH] arms the cap below
+      depth_module.auto_exposure_limit: 10000         # [BOTH] us; lower if blurred, raise if dark
+      # Gain ceiling. 248 is the device maximum and visibly noisy.
+      depth_module.auto_gain_limit_toggle: true       # [BOTH] arms the cap below
+      depth_module.auto_gain_limit: 192               # [BOTH] noise vs brightness
+
+      # ---- Colour rendering -------------------------------------------------
+      # Auto white balance hunts frame to frame under night ambient. Locking it
+      # buys frame-to-frame consistency, not a colour correction.
+      # DAYTIME COST: daylight is ~5500-6500 K, so a 4600 K lock renders warm.
+      # Set enable_auto_white_balance back to true if daytime colour matters
+      # more than night stability -- this is the one setting here with a real
+      # daylight regression.
+      # white_balance is a double; an int fails the parameter type check.
+      depth_module.enable_auto_white_balance: false   # [IMG]
+      depth_module.white_balance: 4600.0              # [IMG] K, range 2800-6500
+      # Only matters under artificial lighting; harmless outdoors.
+      depth_module.power_line_frequency: 2            # [IMG] 0 off, 1 50Hz, 2 60Hz, 3 auto
+      depth_module.saturation: 64                     # [IMG] 0-100; lower mutes the magenta cast
+
+      # ---- HDR sequences (inactive) -----------------------------------------
+      # Alternating-exposure HDR. Applies to depth/infra, not the colour stream.
+      depth_module.hdr_enabled: false          # [DEPTH]
+      depth_module.exposure.1: 7500            # [DEPTH] only used when hdr_enabled
+      depth_module.gain.1: 16                  # [DEPTH] only used when hdr_enabled
+      depth_module.exposure.2: 1               # [DEPTH] only used when hdr_enabled
+      depth_module.gain.2: 16                  # [DEPTH] only used when hdr_enabled
+
+      # ---- Sync, IMU, timing -------------------------------------------------
+      enable_sync: false                       # [BOTH] colour/depth timestamp pairing
       enable_rgbd: false
       enable_gyro: false
       enable_accel: false
       gyro_fps: 0
       accel_fps: 0
       unite_imu_method: 0
-      clip_distance: -2.
+      clip_distance: -2.                       # [DEPTH] metres; negative disables
       angular_velocity_cov: 0.01
       linear_accel_cov: 0.01
       diagnostics_period: 0.0
       publish_tf: true
       tf_publish_rate: 0.0
+
+      # ---- Point cloud --------------------------------------------------------
       pointcloud.enable: true
-      pointcloud.stream_filter: 2
+      pointcloud.stream_filter: 2              # [DEPTH] texture source, 2 = colour
       pointcloud.stream_index_filter: 0
       pointcloud.ordered_pc: false
-      pointcloud.allow_no_texture_points: false
-      align_depth.enable: false
+      pointcloud.allow_no_texture_points: false  # [DEPTH] false drops untextured points
+
+      # ---- Post-processing filters (all off) -----------------------------------
+      # Every filter below trades detail, latency or accuracy for smoothness.
+      # Enable one at a time and re-measure; stacking them hides real geometry.
+      align_depth.enable: false                # [DEPTH] needed to sample depth at colour pixels
       colorizer.enable: false
-      decimation_filter.enable: false
-      spatial_filter.enable: false
-      temporal_filter.enable: false
-      disparity_filter.enable: false
-      hole_filling_filter.enable: false
-      hdr_merge.enable: false
-      wait_for_device_timeout: -1.
+      decimation_filter.enable: false          # [DEPTH] downsamples, fills holes, loses detail
+      spatial_filter.enable: false             # [DEPTH] edge-preserving smoothing
+      temporal_filter.enable: false            # [DEPTH] smears moving objects
+      disparity_filter.enable: false           # [DEPTH] filter in disparity space
+      hole_filling_filter.enable: false        # [DEPTH] invents data in gaps
+      hdr_merge.enable: false                  # [DEPTH] requires hdr_enabled
+
+      # ---- Device connection ----------------------------------------------------
+      wait_for_device_timeout: -1.             # negative waits forever, silently
       reconnect_timeout: 6.
