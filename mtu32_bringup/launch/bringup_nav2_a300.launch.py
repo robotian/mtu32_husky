@@ -15,24 +15,23 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
-
+from clearpath_config.common.utils.yaml import read_yaml
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     GroupAction,
     IncludeLaunchDescription,
-    SetEnvironmentVariable,
     OpaqueFunction,
+    SetEnvironmentVariable,
 )
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
-from launch_ros.actions import Node
-from launch_ros.actions import PushROSNamespace, SetRemap
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch_ros.actions import Node, PushROSNamespace, SetRemap
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import ReplaceString, RewrittenYaml
+
 from clearpath_config.clearpath_config import ClearpathConfig
-from clearpath_config.common.utils.yaml import read_yaml
 
 ARGUMENTS = [    
     DeclareLaunchArgument(

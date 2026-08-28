@@ -358,12 +358,26 @@ docking_server:
     #   pose: [0.0, 0.0, 0.0]
 
     # Husky Charging dock
-    docks: ['husky_charger']  # Input your docks here
+    # docks: ['husky_charger']  # Input your docks here
+    # husky_charger:
+    #   type: 'simple_charging_dock'
+    #   frame: map
+    #   pose: [0.50, 1.9, 1.571]
+    #   # pose: [0.56, 2.0, 1.571]
+    docks: ['husky_charger', 'unloading_station']  # Input your docks here
     husky_charger:
       type: 'simple_charging_dock'
       frame: map
-      pose: [0.50, 1.9, 1.571]
+      pose: [-1.526, 2.442, -2.745] # updated pose when base_mocap and map has different orientation and pose
+      # pose: [0.8, -1.945, 0.0] # original pose when base_mocap and map has same orientation and pose
+      # pose: [0.85, 1.60, 1.571]
       # pose: [0.56, 2.0, 1.571]
+    unloading_station:
+      type: 'simple_charging_dock'
+      frame: map
+      pose: [-0.421, -0.634, -1.152] # updated pose when base_mocap and map has different orientation and pose
+      # pose: [0.85, 1.60, 1.571] # original pose when base_mocap and map has same orientation and pose
+      # pose: [0.8, -1.945, 0.0]
     controller:
       k_phi: 2.0  # High heading error gain - maintain straight alignment
       k_delta: 2.0  # Very low lateral gain - minimize curve corrections

@@ -1,28 +1,16 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
+from clearpath_config.common.utils.yaml import read_yaml
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, OpaqueFunction
+from launch.conditions import IfCondition, UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch_ros.actions import Node, PushRosNamespace, SetRemap
+from nav2_common.launch import RewrittenYaml
 
 from clearpath_config.clearpath_config import ClearpathConfig
-from clearpath_config.common.utils.yaml import read_yaml
-
-from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    GroupAction,
-    IncludeLaunchDescription,
-    OpaqueFunction
-)
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-
-from launch.substitutions import (
-    LaunchConfiguration,
-    PathJoinSubstitution
-)
-
-from launch.conditions import IfCondition, UnlessCondition
-from launch_ros.actions import PushRosNamespace, SetRemap, Node
-from nav2_common.launch import RewrittenYaml
-from launch.substitutions import PythonExpression
 
 ARGUMENTS = [
     DeclareLaunchArgument('use_sim_time', default_value='false',
@@ -53,6 +41,8 @@ ARGUMENTS = [
 
 def launch_setup(context, *args, **kwargs):
     pkg_clearpath_nav2_demos = get_package_share_directory('mtu32_bringup')
+    # bringup_dir = get_package_share_directory('clearpath_sensors')
+    # launch_dir = os.path.join(bringup_dir, 'launch')
 
     setup_path = LaunchConfiguration('setup_path')
     use_mocap_fake_localizer = LaunchConfiguration('use_mocap_fake_localizer')
@@ -115,63 +105,63 @@ def launch_setup(context, *args, **kwargs):
             ),
 
             # mocap fake ekf node to provide filtered odometry for localization and navigation, using mocap ground truth as input
-            Node(
-                package='mocap_fake_localizer',  # tf: odom -> base_link
-                executable='mocap_fake_ekf_node',
-                name='mocap_fake_ekf_node',
-                output='screen',
-                namespace=f'/{namespace}',
-                parameters=[
-                    {'mocap_odom_topic': 'ground_truth/odom'},
-                ],
-                remappings= remappings_tf  + [('odom_filtered', 'platform/odom_filtered')],        
-                condition=UnlessCondition(use_mocap_fake_localizer),
-            ),            
+            # Node(
+            #     package='mocap_fake_localizer',  # tf: odom -> base_link
+            #     executable='mocap_fake_ekf_node',
+            #     name='mocap_fake_ekf_node',
+            #     output='screen',
+            #     namespace=f'/{namespace}',
+            #     parameters=[
+            #         {'mocap_odom_topic': 'ground_truth/odom'},
+            #     ],
+            #     remappings= remappings_tf  + [('odom_filtered', 'platform/odom_filtered')],        
+            #     condition=UnlessCondition(use_mocap_fake_localizer),
+            # ),            
 
             # # static transform from mocap frame to map frame, since mocap provides ground truth in the map frame
-            Node(
-                package='tf2_ros', # tf: base_mocap -> map
-                executable='static_transform_publisher',
-                name='static_tf_mocap2map_publisher',
-                namespace=f'/{namespace}',
-                output='screen',
-                arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
-                remappings = remappings_tf,
-                condition=UnlessCondition(use_mocap_fake_localizer),
-            ),
-            # static transform from map frame to odom frame, since mocap provides ground truth in the map frame and we want to use that as our odometry source for localization and navigation
-            Node(
-                package='tf2_ros', # tf: map -> odom
-                executable='static_transform_publisher',
-                name='static_tf_map2odom_publisher',
-                namespace=f'/{namespace}',
-                output='screen',
-                arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-                remappings = remappings_tf,
-                condition=UnlessCondition(use_mocap_fake_localizer),
-            ),
+            # Node(
+            #     package='tf2_ros', # tf: base_mocap -> map
+            #     executable='static_transform_publisher',
+            #     name='static_tf_mocap2map_publisher',
+            #     namespace=f'/{namespace}',
+            #     output='screen',
+            #     arguments=['0', '0', '0', '0', '0', '0', 'base_mocap', 'map'],
+            #     remappings = remappings_tf,
+            #     condition=UnlessCondition(use_mocap_fake_localizer),
+            # ),
+            # # static transform from map frame to odom frame, since mocap provides ground truth in the map frame and we want to use that as our odometry source for localization and navigation
+            # Node(
+            #     package='tf2_ros', # tf: map -> odom
+            #     executable='static_transform_publisher',
+            #     name='static_tf_map2odom_publisher',
+            #     namespace=f'/{namespace}',
+            #     output='screen',
+            #     arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+            #     remappings = remappings_tf,
+            #     condition=UnlessCondition(use_mocap_fake_localizer),
+            # ),
 
-            Node(
-                package='mocap_fake_localizer', # tf: map -> odom
-                executable='mocap_fake_localizer_node',
-                name='mocap_fake_localizer_node',
-                output='screen',
-                namespace=f'/{namespace}',
-                parameters=[
-                    PathJoinSubstitution(
-                        [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "fake_localizer_config.yaml"]
-                    )
-                ],
-                remappings= remappings_tf,        
-                condition=IfCondition(use_mocap_fake_localizer),
-            ),  
+            # Node(
+            #     package='mocap_fake_localizer', # tf: map -> odom
+            #     executable='mocap_fake_localizer_node',
+            #     name='mocap_fake_localizer_node',
+            #     output='screen',
+            #     namespace=f'/{namespace}',
+            #     parameters=[
+            #         PathJoinSubstitution(
+            #             [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "fake_localizer_config.yaml"]
+            #         )
+            #     ],
+            #     remappings= remappings_tf,        
+            #     condition=IfCondition(use_mocap_fake_localizer),
+            # ),  
 
             Node(
                 package='depthimage_to_laserscan',
                 executable='depthimage_to_laserscan_node',
                 name='depthimage_to_laserscan',
                 namespace=f'/{namespace}',
-                remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'),
+                remappings=remappings_tf +[('depth', f'/{namespace}/sensors/camera_0/depth/image'), 
                             ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
                             ('scan', f'/{namespace}/sensors/camera_0/scan')],
                 parameters=[depth2scan_param_config]
@@ -190,7 +180,7 @@ def launch_setup(context, *args, **kwargs):
                 parameters=[aprilTag_config],
             ),
 
-
+            # Charging Station
             Node(
                 package='docking_utils',
                 name='tf2_pose_node',
@@ -198,7 +188,31 @@ def launch_setup(context, *args, **kwargs):
                 namespace=f'/{namespace}',
                 parameters=[tf2pose_config],
                 remappings=remappings_tf,
-            ),  
+            ), 
+
+            # Unloading Station
+            Node(
+                package='docking_utils',
+                name='tf2_unloader_pose_node',
+                executable='tf2_pose_node',
+                namespace=f'/{namespace}',
+                parameters=[tf2pose_config],
+                remappings=remappings_tf,
+            ), 
+
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource(
+            #         os.path.join(launch_dir, 'slam_launch.py')
+            #     ),
+            #     condition=IfCondition(PythonExpression([slam, ' and ', use_localization])),
+            #     launch_arguments={
+            #         'namespace': namespace,
+            #         'use_sim_time': use_sim_time,
+            #         'autostart': autostart,
+            #         'use_respawn': use_respawn,
+            #         'params_file': params_file,
+            #     }.items(),
+            # ),
         ],
     )
     return [load_nodes]
