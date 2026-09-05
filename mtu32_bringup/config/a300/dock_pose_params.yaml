@@ -14,3 +14,11 @@
       output_pose_topic: "detected_dock_pose"
       timeout: 0.1
       frequency: 10.0
+
+  # tf2_wiferion_charger_pose_node:
+  #   ros__parameters:
+  #     target_frame: "wiferion_charger"
+  #     output_frame: "base_link"
+  #     output_pose_topic: "detected_dock_pose"
+  #     timeout: 0.1
+  #     frequency: 10.0

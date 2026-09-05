@@ -364,7 +364,11 @@ docking_server:
     #   frame: map
     #   pose: [0.50, 1.9, 1.571]
     #   # pose: [0.56, 2.0, 1.571]
-    docks: ['husky_charger', 'unloading_station']  # Input your docks here
+    docks: ['husky_charger', 'unloading_station', 'wiferion_charger']  # Input your docks here
+    wiferion_charger:
+      type: 'simple_charging_dock'
+      frame: map
+      pose: [-6.001, 2.194, 3.14] # updated pose when base_mocap and map has different orientation and pose
     husky_charger:
       type: 'simple_charging_dock'
       frame: map

@@ -3,5 +3,5 @@
     scan_time: 0.033
     range_min: 0.1
     range_max: 5.0
-    scan_height: 80
+    scan_height: 40
     output_frame: "camera_0_depth_frame"   # check the TF tree to see what the depth camera frame is called

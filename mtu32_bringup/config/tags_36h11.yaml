@@ -20,6 +20,6 @@
 
         # optional list of tags
         tag:
-            ids: [1, 6, 2]            # tag ID
+            ids: [1, 8, 2]            # tag ID
             frames: [jackal_charger_april, husky_charger_april, unloading_station_april]  # optional frame name
-            sizes: [0.08, 0.24, 0.24]   # optional tag-specific edge size
+            sizes: [0.08, 0.16, 0.24 ]   # optional tag-specific edge size

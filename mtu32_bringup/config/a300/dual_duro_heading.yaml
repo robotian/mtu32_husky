@@ -109,7 +109,9 @@
     wait_for_datum: true
     use_local_cartesian: false   # default is false
     # datum: [47.11259312836819, -88.59854714848892, 0.0]  #Robindale
-    datum: [47.11280161656325, -88.59839843657778, 0.0]  #Robindale driveway
+    # datum: [47.11280161656325, -88.59839843657778, 0.0]  #Robindale driveway
+    # datum: [45.081680606121395, -84.774552550252, 0.0]  #Lucky Clover (first one)
+    datum: [45.0816882644912, -84.7735247762787, 0.0]  #Lucky Clover (second one)
 
 /**/ekf_global_node:
   ros__parameters:
