@@ -2,7 +2,8 @@ docks:
   jackal_charger:
     type: "simple_charging_dock"
     frame: map
-    pose: [-1.00, -3.54, -1.5708]
+    # pose: [-14.885, 0.515, 4.40675]  #theta(found in the TF) + pi/2
+    pose: [-9.654, -1.972, 3.23]    
     id: "jackal_charger_dock"
   dock2:
     type: "simple_charging_dock"

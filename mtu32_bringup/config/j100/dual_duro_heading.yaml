@@ -110,6 +110,7 @@
     use_local_cartesian: false   # default is false
     # datum: [47.11259312836819, -88.59854714848892, 0.0]  #Robindale
     datum: [47.11280161656325, -88.59839843657778, 0.0]  #Robindale driveway
+    # datum: [45.081680606121395, -84.774552550252, 0.0]  #Lucky Clover
 
 /**/ekf_global_node:
   ros__parameters:
@@ -147,16 +148,6 @@
                   false, false, false,
                   false, false, false]
     imu0_rejection_threshold: 2.5
-    
-    # imu1: sensors/imu_1/data
-    # imu1_config: [false, false, false,
-    #               false, false, false,  
-    #               false, false, false,
-    #               false, false, true,
-    #               false, false, false]
-    # imu1_differential: false
-    # imu1_queue_size: 10
-    # imu1_rejection_threshold: 2.5
 
     process_noise_covariance: [
       0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,

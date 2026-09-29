@@ -1,0 +1,59 @@
+/**:
+  ros__parameters:
+    # Smoothing (read by the Butterworth smoothing plugin, top-level on purpose)
+    butterworth_filter_coeff: 2.0  # Larger --> trust the filtered data more, trust the measurements less.
+
+    # Parameter reference (Jazzy): /opt/ros/jazzy/share/moveit_servo/config/servo_parameters.yaml
+    moveit_servo:
+      scale:
+        # Scale parameters are only used if command_in_type=="unitless"
+        linear:  0.9  # Max linear velocity. Meters per publish_period. Unit is [m/s]. Only used for Cartesian commands.
+        rotational:  1.5 # Max angular velocity. Rads per publish_period. Unit is [rad/s]. Only used for Cartesian commands.
+        # Max joint angular/linear velocity. Rads or Meters per publish period. Only used for joint commands on joint_command_in_topic.
+        joint: 1.0
+
+      ## Properties of outgoing commands
+      publish_period: 0.01  # 1/Nominal publish rate [seconds]
+
+      # What type of topic does your robot driver expect?
+      # Currently supported are std_msgs/Float64MultiArray or trajectory_msgs/JointTrajectory
+      command_out_type: trajectory_msgs/JointTrajectory
+
+      # What to publish? Can save some bandwidth as most robots only require positions or velocities
+      publish_joint_positions: true
+      publish_joint_velocities: false
+      publish_joint_accelerations: false
+
+      ## Smoothing
+      use_smoothing: true
+      smoothing_filter_plugin_name: online_signal_smoothing::ButterworthFilterPlugin
+
+      ## MoveIt properties
+      move_group_name:  arm_0  # check /etc/clearpath/robot.srdf
+
+      ## Stopping behaviour
+      incoming_command_timeout:  0.1  # Stop servoing if X seconds elapse without a new command
+
+      ## Configure handling of singularities and joint limits
+      lower_singularity_threshold:  17.0  # Start decelerating when the condition number hits this (close to singularity)
+      hard_stop_singularity_threshold: 30.0 # Stop when the condition number hits this
+      halt_all_joints_in_cartesian_mode: true
+      joint_limit_margins: [0.2]  # added as a buffer to joint limits [radians]. If moving quickly, make this larger.
+
+      ## Topic names (relative, so they resolve under the robot namespace)
+      cartesian_command_in_topic: manipulator/delta_twist_cmds  # Topic for incoming Cartesian twist commands
+      joint_command_in_topic: manipulator/delta_joint_cmds # Topic for incoming joint angle commands
+      pose_command_in_topic: manipulator/pose_target_cmds
+      joint_topic: platform/joint_states
+      status_topic: manipulator/status # Publish status to this topic
+      command_out_topic: manipulators/arm_0_joint_trajectory_controller/joint_trajectory # Publish outgoing commands here
+      # Required for Pose Command Type (3)
+      pose_tracking:
+        linear_tolerance: 0.001
+        angular_tolerance: 0.01
+
+      ## Collision checking for the entire robot body
+      check_collisions: true # Check collisions?
+      collision_check_rate: 10.0 # [Hz] Collision-checking can easily bog down a CPU if done too often.
+      self_collision_proximity_threshold: 0.01 # Start decelerating when a self-collision is this far [m]
+      scene_collision_proximity_threshold: 0.02 # Start decelerating when a scene collision is this far [m]
