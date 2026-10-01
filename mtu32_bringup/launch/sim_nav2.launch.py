@@ -4,8 +4,10 @@ Reuses the real robot's per-platform Nav2 parameters (config/<platform>/nav2.yam
 patches what the simulator does differently:
 
 * the sim's cmd_vel subscriber takes geometry_msgs/Twist, not TwistStamped -> enable_stamped_cmd_vel is forced off;
-* nothing publishes map->odom, and the sim's odom is ground truth (no drift), so map->odom is a static identity
-  (the robot's map frame origin is where it spawned);
+* map->odom: by default nothing publishes it, and the sim's odom is ground truth (no drift), so it is a static
+  identity (the robot's map frame origin is where it spawned). With gps:=true, sim_swift_nav_dual.launch.py's
+  ekf_global_node publishes it (GPS + dual-antenna heading, the real outdoor flow) and the default params become
+  config/<platform>/nav2_mapping.yaml when the platform has one (as bringup_nav2_mapping_j100.launch.py);
 * odometry comes straight from platform/odom instead of the EKF's platform/odom/filtered (overridable: odom_topic);
 * the simulated clock is wall time (no /clock), so use_sim_time stays false;
 * no map_server: the static layer is dropped from both costmaps and the global one becomes a fixed 100 x 100 m
@@ -18,7 +20,9 @@ it and Nav2 is pointed at sensors/lidar2d_0/scan_filtered (skipped if scan_topic
 lidar; pass scan_topic:=/j100_0921/sensors/camera_0/scan (depthimage_to_laserscan, started by sim_robot_upstart) or
 similar.
 
-    ros2 launch mtu32_bringup sim_nav2.launch.py
+    ros2 launch mtu32_bringup sim_nav2.launch.py            # odometry only
+    ros2 launch mtu32_bringup sim_swift_nav_dual.launch.py  # or: GPS localization first,
+    ros2 launch mtu32_bringup sim_nav2.launch.py gps:=true  #     then Nav2 on it
     ros2 action send_goal /$ROBOT_NAMESPACE/navigate_to_pose nav2_msgs/action/NavigateToPose \
         "{pose: {header: {frame_id: map}, pose: {position: {x: 2.0, y: 0.0}, orientation: {w: 1.0}}}}"
 """
@@ -42,6 +46,8 @@ ARGUMENTS = [
     DeclareLaunchArgument('odom_topic', default_value='platform/odom', description='Odometry topic (relative to the namespace)'),
     DeclareLaunchArgument('params_file', default_value='',
                           description='Nav2 params (default: config/<platform>/nav2.yaml of mtu32_bringup)'),
+    DeclareLaunchArgument('gps', default_value='false',
+                          description='map->odom comes from sim_swift_nav_dual.launch.py (no static map->odom)'),
     DeclareLaunchArgument('autostart', default_value='true'),
     DeclareLaunchArgument('log_level', default_value='info'),
 ]
@@ -55,8 +61,13 @@ def launch_setup(context, *args, **kwargs):
     namespace = clearpath_config.system.namespace
     platform_model = clearpath_config.platform.get_platform_model()
 
-    params_file = LaunchConfiguration('params_file').perform(context) or \
-        os.path.join(pkg, 'config', f'{platform_model}', 'nav2.yaml')
+    gps = LaunchConfiguration('gps').perform(context).lower() in ('true', '1')
+    params_file = LaunchConfiguration('params_file').perform(context)
+    if not params_file:
+        params_file = os.path.join(pkg, 'config', f'{platform_model}', 'nav2.yaml')
+        mapping = os.path.join(pkg, 'config', f'{platform_model}', 'nav2_mapping.yaml')
+        if gps and os.path.exists(mapping):
+            params_file = mapping
 
     scan_topic = LaunchConfiguration('scan_topic').perform(context)
     filter_scan = not scan_topic
@@ -119,15 +130,17 @@ def launch_setup(context, *args, **kwargs):
         yaml.safe_dump(params, f)
         params = f.name
 
-    return nodes + [
-        Node(
+    if not gps:
+        nodes.append(Node(
             package='tf2_ros',
             namespace=namespace,
             executable='static_transform_publisher',
             name='map_to_odom',
             arguments=['--frame-id', 'map', '--child-frame-id', 'odom'],
             remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static')],
-        ),
+        ))
+
+    return nodes + [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(pkg, 'launch', 'navigation_launch.py')),
             launch_arguments={
