@@ -51,8 +51,10 @@ ARGUMENTS = [
         description='Full path to map yaml file to load'
     ), 
     DeclareLaunchArgument(
-        'use_localization', default_value='True',
-        description='Whether to enable localization or not'
+        # False: GPS localization (swift_nav_dual / sim_swift_nav_dual ekf_global_node) owns map->odom; True starts
+        # AMCL + map_server (or SLAM with slam:=True), which would publish a second map->odom.
+        'use_localization', default_value='False',
+        description='Start AMCL + map_server (or SLAM with slam:=True)'
     ),
     DeclareLaunchArgument(
         'use_sim_time',
