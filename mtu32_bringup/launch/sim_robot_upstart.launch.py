@@ -75,21 +75,9 @@ def launch_setup(context, *args, **kwargs):
 
     load_nodes = GroupAction(
         actions=[
-            Node(
-                package="robot_localization",
-                executable="ekf_node",
-                name="ekf_node",
-                output='screen',
-                namespace=namespace,
-                parameters=[
-                    PathJoinSubstitution([setup_path, 'platform', 'config', 'localization.yaml']),
-                    {'publish_tf': False},  # override: OmniGraph already owns odom->base_link TF
-                ],
-                remappings=remappings_tf + [
-                    ('odometry/filtered', f'/{namespace}/platform/odom/filtered'),
-                    ('/diagnostics', 'diagnostics'),
-                ],
-            ),
+            # No ekf_node here: in multirobot_sim the robot container runs the platform EKF as a boot service
+            # (robot/bin/ekf, localization.yaml, publishes odom->base_link and platform/odom/filtered), as the
+            # Clearpath platform service does on the real robot.
 
             # This sim's arm has no real ros2_control hardware interface (Isaac's own OmniGraph drives it
             # directly) -- without this, move_group/servo_node's moveit_simple_controller_manager has no
