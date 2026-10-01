@@ -1,0 +1,11 @@
+docks:
+  jackal_charger:
+    type: "simple_charging_dock"
+    frame: map
+    pose: [-1.00, -3.54, -1.5708]
+    id: "jackal_charger_dock"
+  dock2:
+    type: "simple_charging_dock"
+    frame: map
+    pose: [0.0, 0.0, 0.4]
+    id: "42"
