@@ -3,7 +3,6 @@
 Reuses the real robot's per-platform Nav2 parameters (config/<platform>/nav2.yaml) and navigation_launch.py, and only
 patches what the simulator does differently:
 
-* the sim's cmd_vel subscriber takes geometry_msgs/Twist, not TwistStamped -> enable_stamped_cmd_vel is forced off;
 * map->odom: by default nothing publishes it, and the sim's odom is ground truth (no drift), so it is a static
   identity (the robot's map frame origin is where it spawned). With gps:=true, sim_swift_nav_dual.launch.py's
   ekf_global_node publishes it (GPS + dual-antenna heading, the real outdoor flow) and the default params become
@@ -80,8 +79,6 @@ def launch_setup(context, *args, **kwargs):
 
     def patch(node):
         if isinstance(node, dict):
-            if 'enable_stamped_cmd_vel' in node:
-                node['enable_stamped_cmd_vel'] = False
             if 'odom_topic' in node:
                 node['odom_topic'] = odom_topic
             if scan_topic and 'topic' in node:
