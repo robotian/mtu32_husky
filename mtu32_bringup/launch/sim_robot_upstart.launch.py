@@ -10,6 +10,7 @@ from launch.actions import (
     DeclareLaunchArgument,
     GroupAction,
     IncludeLaunchDescription,
+    LogInfo,
     OpaqueFunction,
     TimerAction
 )
@@ -47,6 +48,10 @@ ARGUMENTS = [
                           description=''),
     DeclareLaunchArgument('moveit_delay', default_value='5.0',
                           description='Delay before starting MoveIt'),
+    DeclareLaunchArgument('use_gps_localization', default_value='true',
+                          choices=['true', 'false'],
+                          description='Dual-GPS global localization (sim_swift_nav_dual.launch.py, publishes '
+                                      'map->odom); skipped if robot.yaml has fewer than two GPS sensors'),
     # DeclareLaunchArgument('use_composition_nav',
     #                        default_value='False',
     #                        description='Whether to use composed bringup',
@@ -110,7 +115,24 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
-    return [load_nodes, bringup_main]
+    # Dual-GPS heading + navsat_transform + ekf_global_node: the map->odom TF that the map-based Nav2 launches
+    # (e.g. bringup_nav2_map_a300.launch.py) wait for. It raises without two GPS sensors, which the generic
+    # models (robot.<model>.yaml.tmpl) don't have, so it is skipped for them instead of failing the whole upstart.
+    actions = [load_nodes, bringup_main]
+    gps = clearpath_config.sensors.get_all_gps()
+    if LaunchConfiguration('use_gps_localization').perform(context) == 'true':
+        if len(gps) >= 2:
+            actions.append(IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(PathJoinSubstitution([
+                    pkg_mtu32_bringup, 'launch', 'sim_swift_nav_dual.launch.py'
+                ])),
+                launch_arguments=[('setup_path', setup_path)],
+            ))
+        else:
+            actions.append(LogInfo(msg=f'{namespace}: {len(gps)} GPS sensor(s) in robot.yaml, '
+                                       'skipping sim_swift_nav_dual (dual-GPS localization needs two)'))
+
+    return actions
 
     
 def generate_launch_description():
