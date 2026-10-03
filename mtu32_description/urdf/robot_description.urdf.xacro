@@ -1,12 +1,25 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+<!-- camera_0 -->
+<!-- <xacro:include filename="$(find mtu32_description)/urdf/intel_realsense.urdf.xacro"/>
+<xacro:intel_realsense name="camera_0" parent_link="fath_pivot_0_mount" update_rate="30" image_height="480" image_width="848" model="d435">
+  <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+</xacro:intel_realsense> -->
+
+<!-- camera_1 -->
+<xacro:include filename="$(find mtu32_description)/urdf/intel_realsense.urdf.xacro"/>
+<xacro:intel_realsense name="camera_1" parent_link="arm_0_end_effector_link" update_rate="30" image_height="480" image_width="848" model="d405">
+    <origin xyz="0.045 0.0 0.0" rpy="0.0 0.0 0.0"/>
+</xacro:intel_realsense>
+
 <!-- Add Mount Plates Link -->
 <link name="arch_link">
   <visual>
     <material name="clearpath_black"/>
     <geometry>
-      <mesh filename="package://mtu32_description/meshes/sensor_arch.STL"/>
+      <!-- <mesh filename="package://mtu32_description/meshes/sensor_arch.STL"/> -->
+      <mesh filename="package://mtu32_description/meshes/sensor_arch_v2.STL"/>
     </geometry>
   </visual>
   <collision>
@@ -25,7 +38,7 @@
 </joint>
 
 <!-- Add Duro Base and E-Stop Button Link -->
-<link name="estop_link">
+<!-- <link name="estop_link">
   <visual>
     <material name="clearpath_yellow"/>
     <geometry>
@@ -38,17 +51,17 @@
       <box size="0.12 0.59 0.3"/> #main sensor arch box
     </geometry>
   </collision>
-</link>
+</link> -->
 
 <!-- Add Duro Base and E-Stop Button Joint -->
-<joint name="estop_joint" type="fixed">
+<!-- <joint name="estop_joint" type="fixed">
   <child link="estop_link"/>
   <parent link="base_link"/>
   <origin xyz="0 0 0" rpy="0 0 0"/>
-</joint>
+</joint> -->
 
 <!-- Add Duro Base and E-Stop Button Link -->
-<link name="button_link">
+<!-- <link name="button_link">
   <visual>
     <material name="clearpath_red"/>
     <geometry>
@@ -61,14 +74,14 @@
       <box size="0.12 0.42 0.12"/> #cable protection box
     </geometry>
   </collision>
-</link>
+</link> -->
 
 <!-- Add Duro Base and E-Stop Button Joint -->
-<joint name="button_joint" type="fixed">
+<!-- <joint name="button_joint" type="fixed">
   <child link="button_link"/>
   <parent link="base_link"/>
   <origin xyz="0 0 0" rpy="0 0 0"/>
-</joint>
+</joint> -->
 
 <!-- Add Collision for Arm Ethernet Cable Link -->
 <link name="eth_link">

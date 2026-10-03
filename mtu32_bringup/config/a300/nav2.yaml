@@ -20,6 +20,7 @@ bt_navigator:
 controller_server:
   ros__parameters:
     enable_stamped_cmd_vel: true
+    odom_topic: platform/odom/filtered
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
@@ -36,8 +37,8 @@ controller_server:
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.15
+      yaw_goal_tolerance: 0.15
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
@@ -357,12 +358,30 @@ docking_server:
     #   pose: [0.0, 0.0, 0.0]
 
     # Husky Charging dock
-    docks: ['husky_charger']  # Input your docks here
+    # docks: ['husky_charger']  # Input your docks here
+    # husky_charger:
+    #   type: 'simple_charging_dock'
+    #   frame: map
+    #   pose: [0.50, 1.9, 1.571]
+    #   # pose: [0.56, 2.0, 1.571]
+    docks: ['husky_charger', 'unloading_station', 'wiferion_charger']  # Input your docks here
+    wiferion_charger:
+      type: 'simple_charging_dock'
+      frame: map
+      pose: [-6.001, 2.194, 3.14] # updated pose when base_mocap and map has different orientation and pose
     husky_charger:
       type: 'simple_charging_dock'
       frame: map
-      pose: [0.50, 1.9, 1.571]
+      pose: [-1.526, 2.442, -2.745] # updated pose when base_mocap and map has different orientation and pose
+      # pose: [0.8, -1.945, 0.0] # original pose when base_mocap and map has same orientation and pose
+      # pose: [0.85, 1.60, 1.571]
       # pose: [0.56, 2.0, 1.571]
+    unloading_station:
+      type: 'simple_charging_dock'
+      frame: map
+      pose: [-0.421, -0.634, -1.152] # updated pose when base_mocap and map has different orientation and pose
+      # pose: [0.85, 1.60, 1.571] # original pose when base_mocap and map has same orientation and pose
+      # pose: [0.8, -1.945, 0.0]
     controller:
       k_phi: 2.0  # High heading error gain - maintain straight alignment
       k_delta: 2.0  # Very low lateral gain - minimize curve corrections
@@ -373,5 +392,5 @@ docking_server:
       use_collision_detection: true
       slowdown_radius: 0.8  # Increased for more gradual final approach
       projection_time: 1.0  # Slightly increased for stability and lookahead
-      # transform_tolerance: 0.1 # Time with which to post-date the transform that is published, to indicate that this transform is valid into the future.
+      transform_tolerance: 0.5 # Time with which to post-date the transform that is published, to indicate that this transform is valid into the future.
       dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3

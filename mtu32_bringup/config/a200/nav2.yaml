@@ -20,6 +20,7 @@ bt_navigator:
 controller_server:
   ros__parameters:
     enable_stamped_cmd_vel: true
+    odom_topic: platform/odom/filtered
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
@@ -36,8 +37,8 @@ controller_server:
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.15
+      yaw_goal_tolerance: 0.15
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
@@ -135,33 +136,60 @@ local_costmap:
       width: 5
       height: 5
       resolution: 0.06
-      footprint: "[ [0.55, 0.45], [0.55, -0.45], [-0.55, -0.45], [-0.55, 0.45] ]"
+      footprint: "[ [0.495, 0.349], [0.495, -0.349], [-0.495, -0.349], [-0.495, 0.349] ]"
       always_send_full_costmap: true
-      plugins: ["static_layer", "voxel_layer", "inflation_layer"]
+      # plugins: ["static_layer", "voxel_layer", "inflation_layer"]
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0
         inflation_radius: 0.8
-      voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        publish_voxel_map: true
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: scan
-        scan:
-          topic: sensors/lidar2d_0/scan
-          max_obstacle_height: 2.0
+        observation_sources: high_scan low_scan
+        high_scan:
+          topic: /a200_0284/sensors/lidar2d_0/scan_filtered
           clearing: true
           marking: true
           data_type: "LaserScan"
+          min_obstacle_height: 0.0   # Minimum height to care about for this sensor
+          max_obstacle_height: 1.2   # Maximum height of obstacles it can see
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
+        low_scan:
+          topic: /a200_0284/sensors/camera_0/scan
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          min_obstacle_height: 0.0   # Minimum height to care about for this sensor
+          max_obstacle_height: 0.35   # Maximum height of obstacles it can see
+          raytrace_max_range: 2.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+      # voxel_layer:
+      #   plugin: "nav2_costmap_2d::VoxelLayer"
+      #   enabled: false
+      #   publish_voxel_map: true
+      #   origin_z: 0.0
+      #   z_resolution: 0.05
+      #   z_voxels: 16
+      #   max_obstacle_height: 2.0
+      #   mark_threshold: 0
+      #   observation_sources: scan
+      #   scan:
+      #     topic: /a200_0284/sensors/lidar2d_0/scan_filtered
+      #     max_obstacle_height: 2.0
+      #     clearing: true
+      #     marking: true
+      #     data_type: "LaserScan"
+      #     raytrace_max_range: 3.0
+      #     raytrace_min_range: 0.0
+      #     obstacle_max_range: 2.5
+      #     obstacle_min_range: 0.0
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: true
@@ -174,7 +202,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      footprint: "[ [0.55, 0.45], [0.55, -0.45], [-0.55, -0.45], [-0.55, 0.45] ]"
+      footprint: "[ [0.495, 0.349], [0.495, -0.349], [-0.495, -0.349], [-0.495, 0.349] ]"
       resolution: 0.06
       track_unknown_space: true
       always_send_full_costmap: true
@@ -182,14 +210,28 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: scan
-        scan:
-          topic: sensors/lidar2d_0/scan
+        observation_sources: high_scan low_scan
+        high_scan:
+          topic: /a200_0284/sensors/lidar2d_0/scan_filtered
           max_obstacle_height: 2.0
           clearing: true
           marking: true
           data_type: "LaserScan"
+          min_obstacle_height: 0.4   # Minimum height to care about for this sensor
+          max_obstacle_height: 1.2   # Maximum height of obstacles it can see
           raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+        low_scan:
+          topic: /a200_0284/sensors/camera_0/scan
+          max_obstacle_height: 0.15
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          min_obstacle_height: 0.0   # Minimum height to care about for this sensor
+          max_obstacle_height: 0.4   # Maximum height of obstacles it can see
+          raytrace_max_range: 2.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
@@ -251,7 +293,6 @@ behavior_server:
     min_rotational_vel: 0.2
     rotational_acc_lim: 0.5
 
-
 waypoint_follower:
   ros__parameters:
     enable_stamped_cmd_vel: true
@@ -270,10 +311,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [1.0, 0.0, 1.0]
-    min_velocity: [-1.0, 0.0, -1.0]
-    max_accel: [1.0, 0.0, 1.0]
-    max_decel: [-1.0, 0.0, -1.0]
+    max_velocity: [2.0, 0.0, 2.0]
+    min_velocity: [-2.0, 0.0, -2.0]
+    max_accel: [4.0, 0.0, 4.0]
+    max_decel: [-4.0, 0.0, -4.0]
     odom_topic: "platform/odom/filtered"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
@@ -306,7 +347,7 @@ collision_monitor:
     observation_sources: ["scan"]
     scan:
       type: "scan"
-      topic: "sensors/lidar2d_0/scan"
+      topic: "sensors/lidar2d_0/scan_filtered"
       min_height: 0.15
       max_height: 2.0
       enabled: True
@@ -331,18 +372,23 @@ docking_server:
     simple_charging_dock:
       plugin: 'opennav_docking::SimpleChargingDock'
       docking_threshold: 0.05
-      staging_x_offset: -0.7
+      staging_x_offset: -1.5
       use_external_detection_pose: true
       use_battery_status: false # true
       use_stall_detection: false # true
 
       external_detection_timeout: 1.0
-      external_detection_translation_x: -0.18
-      external_detection_translation_y: 0.0
-      external_detection_rotation_roll: -1.57
-      external_detection_rotation_pitch: -1.57
+      # external_detection_translation_x: -0.18
+      # external_detection_translation_y: 0.0
+      # external_detection_rotation_roll: -1.57
+      # external_detection_rotation_pitch: -1.57
+      # external_detection_rotation_yaw: 0.0
+      external_detection_translation_x: -0.9
+      external_detection_translation_y: 0.04
+      external_detection_rotation_roll: 0.0
+      external_detection_rotation_pitch: 1.57
       external_detection_rotation_yaw: 0.0
-      filter_coef: 0.1
+      filter_coef: 0.3
 
     # Dock instances
     # The following example illustrates configuring dock instances.
@@ -352,8 +398,22 @@ docking_server:
     #   frame: map
     #   pose: [0.0, 0.0, 0.0]
 
+    # Husky Charging dock
+    docks: ['husky_charger']  # Input your docks here
+    husky_charger:
+      type: 'simple_charging_dock'
+      frame: map
+      pose: [0.50, 1.9, 1.571]
+      # pose: [0.56, 2.0, 1.571]
     controller:
-      k_phi: 3.0
-      k_delta: 2.0
+      k_phi: 2.0  # High heading error gain - maintain straight alignment
+      k_delta: 2.0  # Very low lateral gain - minimize curve corrections
       v_linear_min: 0.15
       v_linear_max: 0.15
+      v_angular_max: 0.25  # Reduced for smoother, less jerky corrections
+      rotate_to_heading_max_angular_accel: 1.0  # Softer angular acceleration prevents oscillations
+      use_collision_detection: true
+      slowdown_radius: 0.8  # Increased for more gradual final approach
+      projection_time: 1.0  # Slightly increased for stability and lookahead
+      transform_tolerance: 0.5 # Time with which to post-date the transform that is published, to indicate that this transform is valid into the future.
+      dock_collision_threshold: 2.0 # Distance to ignore collisions near dock. Threshold increased due to size of husky  Default: 0.3

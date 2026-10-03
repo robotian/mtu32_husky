@@ -5,7 +5,7 @@
     interface: 1 # 1: TCP Client, 2: Serial, 3: File
 
     # TCP Client (interface: 1)
-    host_ip: "192.168.131.31"
+    host_ip: "192.168.131.32"
     host_port: 55555
     read_timeout: 2000  # [ms]
     write_timeout: 2000 # [ms]

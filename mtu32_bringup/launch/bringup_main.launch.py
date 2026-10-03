@@ -1,10 +1,7 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
-
-from clearpath_config.clearpath_config import ClearpathConfig
 from clearpath_config.common.utils.yaml import read_yaml
-
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -22,9 +19,12 @@ from launch.substitutions import (
 )
 
 from launch.conditions import IfCondition, UnlessCondition
-from launch_ros.actions import PushRosNamespace, SetRemap, Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch_ros.actions import Node, PushRosNamespace, SetRemap
 from nav2_common.launch import RewrittenYaml
-from launch.substitutions import PythonExpression
+
+from clearpath_config.clearpath_config import ClearpathConfig
 
 ARGUMENTS = [
     DeclareLaunchArgument('use_sim_time', default_value='false',
