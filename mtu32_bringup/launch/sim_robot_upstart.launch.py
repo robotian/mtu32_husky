@@ -52,6 +52,13 @@ ARGUMENTS = [
                           choices=['true', 'false'],
                           description='Dual-GPS global localization (sim_swift_nav_dual.launch.py, publishes '
                                       'map->odom); skipped if robot.yaml has fewer than two GPS sensors'),
+    DeclareLaunchArgument('use_nav2', default_value='true',
+                          choices=['true', 'false'],
+                          description='Nav2 on a static map (bringup_nav2_map.launch.py, settings per robot from '
+                                      'config/nav2_robots.yaml)'),
+    DeclareLaunchArgument('nav2_map', default_value='',
+                          description='Map yaml for Nav2, in mtu32_bringup/map or absolute (default: from '
+                                      'nav2_robots.yaml)'),
     # DeclareLaunchArgument('use_composition_nav',
     #                        default_value='False',
     #                        description='Whether to use composed bringup',
@@ -131,6 +138,20 @@ def launch_setup(context, *args, **kwargs):
         else:
             actions.append(LogInfo(msg=f'{namespace}: {len(gps)} GPS sensor(s) in robot.yaml, '
                                        'skipping sim_swift_nav_dual (dual-GPS localization needs two)'))
+
+    # Nav2 on a map (map_server + navigation servers, no AMCL): map->odom comes from the GPS localization above
+    # or the mocap fake localizer; without either, Nav2's costmaps wait for it.
+    if LaunchConfiguration('use_nav2').perform(context) == 'true':
+        actions.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                pkg_mtu32_bringup, 'launch', 'bringup_nav2_map.launch.py'
+            ])),
+            launch_arguments=[
+                ('setup_path', setup_path),
+                ('use_sim_time', LaunchConfiguration('use_sim_time')),
+                ('map', LaunchConfiguration('nav2_map')),
+            ],
+        ))
 
     return actions
 
