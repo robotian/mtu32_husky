@@ -443,22 +443,19 @@ docking_server:
     wiferion_charger:
       type: 'wiferion_charging_dock'
       frame: map
-      pose: [-1.347, 1.588, -0.057]
-      # pose: [-3.596, 1.604, 1.611]   # second map origin 
+      pose: [-3.596, 1.604, 1.611]   # second map origin
       # pose: [-4.882, 1.665, 1.626] # updated pose when base_mocap and map has different orientation and pose      
       # pose: [-5.186, 1.291, 0.029] # updated pose when base_mocap and map has different orientation and pose      
     husky_charger:
       type: 'wiferion_charging_dock'
       frame: map
-      pose: [-1.347, 1.588, -0.057] # theta -0.0569999999999999
-      # pose: [-3.596, 1.604, 1.611]   # second map origin
+      pose: [-3.596, 1.604, 1.611]   # second map origin
       # pose: [-4.882, 1.665, 1.626]
       # pose: [-5.186, 1.291, 0.029]
     unloading_station:
       type: 'unloading_station_dock'
       frame: map
-      pose: [-1.347, 1.588, -0.057]
-      # pose: [-3.596, 1.604, 1.611]   # second map origin
+      pose: [-3.596, 1.604, 1.611]   # second map origin
       # pose: [-4.882, 1.665, 1.626]
       # pose: [-5.186, 1.291, 0.029]
       # pose: [-6.772, 8.290, 1.571] # updated pose when base_mocap and map has different orientation and pose

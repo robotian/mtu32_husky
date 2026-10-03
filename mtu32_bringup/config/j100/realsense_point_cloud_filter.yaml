@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    filter_chain:
+      - name: crop_box
+        type: point_cloud2_filters/CropBoxFilterPointCloud2
+        params:
+          min_x: -0.5
+          max_x: 0.5
+          min_y: -0.5
+          max_y: 0.5
+          min_z: 0.2
+          max_z: 1.5
+          negative: false
+          keep_organized: true

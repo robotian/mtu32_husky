@@ -56,7 +56,7 @@ def launch_setup(context, *args, **kwargs):
                 package='swiftnav_ros2_driver',
                 executable='sbp-to-ros',
                 name='ref_duro_node',
-                namespace=f'/{namespace}/sensors/gps_1',
+                namespace=f'/{namespace}/sensors/gps_2',
                 remappings=[
                     ('navsatfix','fix'),
                 ],
@@ -72,7 +72,7 @@ def launch_setup(context, *args, **kwargs):
                 package='swiftnav_ros2_driver',
                 executable='sbp-to-ros',
                 name='att_duro_node',
-                namespace=f'/{namespace}/sensors/gps_0',
+                namespace=f'/{namespace}/sensors/gps_1',
                 remappings=[
                     ('navsatfix','fix'),
                 ],
@@ -88,7 +88,7 @@ def launch_setup(context, *args, **kwargs):
                 package='dual_duro_heading',
                 executable='heading_filter',
                 name='dual_duro_heading_node',
-                namespace=f'/{namespace}/sensors/gps_0',
+                namespace=f'/{namespace}/sensors/gps_1',
                 # remappings=[
                 #     ('baseline','/baseline'),
                 #     ('heading_imu','/heading_imu')
@@ -102,9 +102,9 @@ def launch_setup(context, *args, **kwargs):
                 name='navsat_transform',
                 namespace=f'/{namespace}',
                 remappings=remappings_tf + [
-                    ('gps/fix', f'/{namespace}/sensors/gps_1/fix'),          # SwiftNav global position topic
+                    ('gps/fix', f'/{namespace}/sensors/gps_2/fix'),          # SwiftNav global position topic
                     ('odometry/filtered', f'/{namespace}/odometry/global'),  # from EKF
-                    ('imu', f'/{namespace}/sensors/gps_0/heading_imu'),     # Your computed RTK heading topic
+                    ('imu', f'/{namespace}/sensors/gps_1/heading_imu'),     # Your computed RTK heading topic
                     ('datum', f'/{namespace}/navsat_transform/datum'),
                     ('fromLL', f'/{namespace}/navsat_transform/fromLL'),
                     ('fromLLArray', f'/{namespace}/navsat_transform/fromLLArray'),
@@ -129,7 +129,7 @@ def launch_setup(context, *args, **kwargs):
                     ('reset', 'ekf_global_node/reset'),
                     ('toggle', 'ekf_global_node/toggle'),
                     ('/diagnostics', 'diagnostics'),
-                #     ('imu/data', f'/{namespace}/sensors/gps_0/heading_imu'),
+                #     ('imu/data', f'/{namespace}/sensors/gps_1/heading_imu'),
                 #     ('odometry/gps', f'/{namespace}/odometry/gps'),
                 ],
                 parameters=[

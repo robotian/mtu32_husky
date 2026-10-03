@@ -20,9 +20,10 @@ bt_navigator:
 controller_server:
   ros__parameters:
     enable_stamped_cmd_vel: true
+    odom_topic: platform/odom/filtered  # careful
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
+    min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugins: ["progress_checker"]
@@ -42,7 +43,7 @@ controller_server:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 72
       model_dt: 0.05
-      batch_size: 2000
+      batch_size: 1000
       ax_max: 2.5
       ax_min: -2.5
       ay_max: 3.0
@@ -56,7 +57,7 @@ controller_server:
       wz_max: 1.0
       iteration_count: 1
       prune_distance: 1.7
-      transform_tolerance: 0.1
+      transform_tolerance: 0.5
       temperature: 0.3
       gamma: 0.015
       motion_model: "DiffDrive"
@@ -85,7 +86,7 @@ controller_server:
         enabled: true
         cost_power: 1
         cost_weight: 5.0
-        threshold_to_consider: 0.5
+        threshold_to_consider: 0.3
       GoalAngleCritic:
         enabled: true
         cost_power: 1
@@ -119,13 +120,13 @@ controller_server:
         cost_power: 1
         cost_weight: 5.0
         offset_from_furthest: 5
-        threshold_to_consider: 0.2 # Stay on the path until almost touching the goal
+        threshold_to_consider: 0.1 # Stay on the path until almost touching the goal
       PathAngleCritic:
         enabled: true
         cost_power: 1
         cost_weight: 2.0
         offset_from_furthest: 4
-        threshold_to_consider: 0.5
+        threshold_to_consider: 0.3
         max_angle_to_furthest: 1.0
         mode: 0
 
@@ -138,6 +139,7 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
+      transform_tolerance: 0.5
       width: 5
       height: 5
       resolution: 0.06
@@ -180,10 +182,24 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
+      transform_tolerance: 0.5
       footprint: "[ [0.254, 0.2159], [0.254, -0.2159], [-0.254, -0.2159], [-0.254, 0.2159] ]"
       resolution: 0.06
+      # track_unknown_space: true
+      # always_send_full_costmap: true
+      
+      # Crucial Settings for Mapping without a pre-loaded map
+      # rolling_window: false
       track_unknown_space: true
       always_send_full_costmap: true
+      # Define the bounding box of your GPS operational area (in meters)
+      # width: 100
+      # height: 100
+      # resolution: 0.05
+      # origin_x: -50.0
+      # origin_y: -50.0
+      # origin: [-50.0, -50.0, 0.0] # Centers the map around your starting GPS point
+
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -219,14 +235,14 @@ planner_server:
     #   allow_unknown: true
     GridBased:
       plugin: "nav2_smac_planner::SmacPlannerHybrid"
-      tolerance: 0.5                      # tolerance for planning if unable to reach exact pose, in meters
+      tolerance: 0.1                      # tolerance for planning if unable to reach exact pose, in meters
       downsample_costmap: false           # whether or not to downsample the map
       downsampling_factor: 1              # multiplier for the resolution of the costmap layer (e.g. 2 on a 5cm costmap would be 10cm)
       allow_unknown: false                # allow traveling in unknown space
       max_iterations: 1000000             # maximum total iterations to search for before failing (in case unreachable), set to -1 to disable
       max_on_approach_iterations: 1000    # maximum number of iterations to attempt to reach goal once in tolerance
       terminal_checking_interval: 5000     # number of iterations between checking if the goal has been cancelled or planner timed out
-      max_planning_time: 3.5              # max time in s for planner to plan, smooth, and upsample. Will scale maximum smoothing and upsampling times based on remaining time after planning.
+      max_planning_time: 2.0              # max time in s for planner to plan, smooth, and upsample. Will scale maximum smoothing and upsampling times based on remaining time after planning.
       motion_model_for_search: "DUBIN"    # For Hybrid Dubin, Reeds-Shepp
       cost_travel_multiplier: 2.0         # For 2D: Cost multiplier to apply to search to steer away from high cost areas. Larger values will place in the center of aisles more exactly (if non-`FREE` cost potential field exists) but take slightly longer to compute. To optimize for speed, a value of 1.0 is reasonable. A reasonable tradeoff value is 2.0. A value of 0.0 effective disables steering away from obstacles and acts like a naive binary search A*.
       angle_quantization_bins: 64         # For Hybrid nodes: Number of angle bins for search, must be 1 for 2D node (no angle search)
@@ -285,7 +301,7 @@ behavior_server:
     global_frame: map
     local_frame: odom
     robot_base_frame: base_link
-    transform_tolerance: 0.1
+    transform_tolerance: 0.5
     enable_stamped_cmd_vel: true
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
@@ -327,7 +343,7 @@ collision_monitor:
     cmd_vel_in_topic: "cmd_vel_smoothed"
     cmd_vel_out_topic: "cmd_vel"
     state_topic: "collision_monitor_state"
-    transform_tolerance: 0.2
+    transform_tolerance: 0.5
     source_timeout: 1.0
     base_shift_correction: True
     stop_pub_timeout: 2.0
@@ -346,7 +362,7 @@ collision_monitor:
     observation_sources: ["scan"]
     scan:
       type: "scan"
-      topic: "sensors/lidar2d_0/scan"
+      topic: "sensors/lidar2d_0/scan_filtered"
       min_height: 0.15
       max_height: 2.0
       enabled: True
@@ -370,33 +386,27 @@ docking_server:
     dock_plugins: ['simple_charging_dock']
     simple_charging_dock:
       plugin: 'opennav_docking::SimpleChargingDock'
-      docking_threshold: 0.05
-      staging_x_offset: -0.7
+      docking_threshold: 0.05 # Distance to consider the robot docked
+      staging_x_offset: -0.8
       use_external_detection_pose: true
       use_battery_status: false # true
       use_stall_detection: false # true
 
-      external_detection_timeout: 1.0
-      external_detection_translation_x: -0.29
-      external_detection_translation_y: -0.07
+      external_detection_timeout: 3.0
+      external_detection_translation_x: -0.28
+      external_detection_translation_y: 0.08
       external_detection_rotation_roll: 0.0
       external_detection_rotation_pitch: 1.57
       external_detection_rotation_yaw: 0.0
       filter_coef: 0.1
 
-    # Dock instances
-    # The following example illustrates configuring dock instances.
-    # docks: ['home_dock']  # Input your docks here
-    # home_dock:
-    #   type: 'simple_charging_dock'
-    #   frame: map
-    #   pose: [0.0, 0.0, 0.0]
-    # Jackal Charging dock
+    # Dock server
     docks: ['jackal_charger']  # Input your docks here
     jackal_charger:
       type: 'simple_charging_dock'
       frame: map
-      pose: [-1.57, 0.0, 3.141592]
+      pose: [-1.00, -3.54, -1.5708]
+      # pose: [0.0, 0.0, -1.5708]
     controller:
       k_phi: 1.5   # Heading error gain. How aggressively the robot corrects its angle relative to the dock.
       k_delta: 2.0 # Lateral error gain. How aggressively the robot steers back onto the center line.

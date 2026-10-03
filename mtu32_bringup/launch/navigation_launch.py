@@ -144,7 +144,7 @@ def generate_launch_description():
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
-                remappings=remappings + [('cmd_vel', 'cmd_vel_nav')],
+                remappings=remappings + [('cmd_vel', 'cmd_vel_nav'), ('/trajectories', 'trajectories')],
             ),
             Node(
                 package='nav2_smoother',
@@ -244,7 +244,10 @@ def generate_launch_description():
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
-                remappings=remappings + [('cmd_vel', 'cmd_vel_nav')],
+                remappings=remappings + [
+                    ('cmd_vel', 'cmd_vel_nav'),
+                    ('battery_state','platform/bms/state')
+                    ],
             ),
             # Node(
             #     package='nav2_map_server',
@@ -281,7 +284,11 @@ def generate_launch_description():
                         plugin='nav2_controller::ControllerServer',
                         name='controller_server',
                         parameters=[configured_params],
-                        remappings=remappings + [('cmd_vel', 'cmd_vel_nav')],
+                        remappings=remappings + [
+                            ('cmd_vel', 'cmd_vel_nav'), 
+                            ('/trajectories', 'trajectories'),
+                            ('trajectories', '/j100_0921/trajectories'),
+                            ],
                     ),
                     ComposableNode(
                         package='nav2_smoother',
@@ -345,7 +352,9 @@ def generate_launch_description():
                         plugin='opennav_docking::DockingServer',
                         name='docking_server',
                         parameters=[configured_params],
-                        remappings=remappings + [('cmd_vel', 'cmd_vel_nav')],
+                        remappings=remappings + 
+                            [('cmd_vel', 'cmd_vel_nav'),
+                            ('battery_state','platform/bms/state')],
                     ),
                     ComposableNode(
                         package='nav2_map_server',

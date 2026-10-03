@@ -14,14 +14,16 @@ j100_0921/sensors/camera_1:
       log_level: 'info'
       output: 'screen'
       enable_color: True
-      # rgb_camera.color_profile: '640,480,30'
+      rgb_camera.color_profile: '1280x720x15' #'640x360x15' # '1280x720x15'  #'1280,720,30'
       rgb_camera.color_format: 'RGB8'
       rgb_camera.enable_auto_exposure: True
       enable_depth: True
       enable_infra: False
       enable_infra1: False
       enable_infra2: False
-      # depth_module.depth_profile: '640,480,30'
+      depth_module.profile: '1280x720x15'
+      depth_module.color_profile: '1280x720x15' #'1280x720x15'
+      depth_module.depth_profile: '1280x720x15' #'848x480x30'
       depth_module.depth_format: 'Z16'
       depth_module.infra_profile: '0,0,0'
       depth_module.infra_format: 'RGB8'
@@ -35,14 +37,14 @@ j100_0921/sensors/camera_1:
       depth_module.gain.1: 16
       depth_module.exposure.2: 1
       depth_module.gain.2: 16
-      enable_sync: False
+      enable_sync: True
       enable_rgbd: False
       enable_gyro: False
       enable_accel: False
       gyro_fps: 0
       accel_fps: 0
       unite_imu_method: 0
-      clip_distance: -2.0
+      clip_distance: 0.7
       angular_velocity_cov: 0.01
       linear_accel_cov: 0.01
       diagnostics_period: 0.0
@@ -52,14 +54,30 @@ j100_0921/sensors/camera_1:
       pointcloud.stream_filter: 2
       pointcloud.stream_index_filter: 0
       pointcloud.ordered_pc: False
-      pointcloud.allow_no_texture_points: False
-      align_depth.enable: False
+      pointcloud.allow_no_texture_points: True
+      align_depth.enable: True
       colorizer.enable: False
       decimation_filter.enable: False
-      spatial_filter.enable: False
-      temporal_filter.enable: False
       disparity_filter.enable: False
+      disparity_to_depth.enable: False
       hole_filling_filter.enable: False
       hdr_merge.enable: False
       wait_for_device_timeout: -1.0
       reconnect_timeout: 6.0
+      # Enable Spatial, Temporal, and Hole Filling filters (they preserve thin edges automatically)
+      spatial_filter.enable: False
+      spatial_filter.spatial_alpha: 0.5
+      spatial_filter.spatial_delta: 20
+
+      temporal_filter.enable: False
+      temporal_filter.temporal_alpha: 0.4
+      temporal_filter.temporal_delta: 20
+
+      hole_filling_filter.enable: False
+      hole_filling_filter.holes_fill: 1
+      depth_module.visual_preset: 3
+      # High accuracy visual preset for fine target detection
+      # visual_preset: "3"
+      # aligned_depth_to_color.image_raw.ffmpeg.gop_size: 15
+      # color.image_raw.ffmpeg.gop_size: 15
+      # depth.image_rect_raw.ffmpeg.gop_size: 15

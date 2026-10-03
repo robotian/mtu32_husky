@@ -4,4 +4,4 @@
     range_min: 0.1
     range_max: 5.0
     scan_height: 10
-    output_frame: "depth2scan_link"
+    output_frame: "camera_0_left_camera_frame" #"depth2scan_link"

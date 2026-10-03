@@ -6,10 +6,10 @@
       params:
         box_frame: base_link
         max_x: 0.5
-        max_y: 0.3
+        max_y: 0.35
         max_z: 0.5
         min_x: -0.5
-        min_y: -0.3
+        min_y: -0.35
         min_z: -0.5        
         invert: false # activate to remove all points outside of the box
     filter2:

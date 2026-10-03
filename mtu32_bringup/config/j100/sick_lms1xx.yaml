@@ -1,0 +1,25 @@
+
+/**/sick_scan:
+    ros__parameters:
+      hostname: '192.168.131.20'
+      cloud_topic: 'cloud'
+      laserscan_topic: 'scan'
+      frame_id: 'lidar2d_0_laser'
+      tf_publish_rate: 40.0
+      port: '/dev/ttyUSB0'
+      baud: 500000
+      angle_offset: 0.0
+      inversion: false
+      time_offset: 0.0
+      scan_mode: 'Standard'
+      min_ang: -2.35619449615
+      max_ang: 2.35619449615
+      cluster_count_min: 1
+      cluster_count_max: 1
+      cluster_time_min: 0.0
+      cluster_time_max: 0.0
+      skip_scan: false
+      skip_scan_count: 1
+      skip_scan_time: 0.0
+      skip_scan_angle_min: -3.14159265359
+      skip_scan_angle_max: 3.14159265359
