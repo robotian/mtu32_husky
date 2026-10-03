@@ -6,10 +6,12 @@
 #
 #   params_file      Nav2 params: a file name in config/<platform>/ or an absolute path. A list means "the first one
 #                    that exists", so a platform without its own nav2_map.yaml falls back to its nav2.yaml.
-#   scan_topic       2D LaserScan for the costmaps' obstacle layers and the collision monitor (every `topic:` key of
-#                    the params file), relative to the robot namespace.
-#                    auto = sensors/lidar2d_0/scan_filtered if robot.yaml has a lidar2d, else sensors/camera_0/scan
-#                    (depthimage_to_laserscan, started by bringup_main.launch.py).
+#   scan_topic       One 2D LaserScan for the costmaps' obstacle layers and the collision monitor (replaces every
+#                    `topic:` key of the params file), relative to the robot namespace.
+#                    auto   = sensors/lidar2d_0/scan_filtered if robot.yaml has a lidar2d, else sensors/camera_0/scan
+#                             (depthimage_to_laserscan, started by bringup_main.launch.py).
+#                    params = keep the params file's own observation sources (e.g. several scans per layer); only
+#                             their namespace is set to this robot's (/a200_0284/sensors/... -> /<namespace>/sensors/...).
 #   map              Map yaml: a file name in mtu32_bringup's map/ or an absolute path.
 #   param_overrides  Nav2 parameters merged over params_file, in the same layout as the file (dicts are merged
 #                    key by key, anything else is replaced), for the few values one robot needs differently.
@@ -33,8 +35,9 @@ platforms:
     # No 2D lidar: the ZED's depth image through depthimage_to_laserscan.
     scan_topic: sensors/camera_0/scan
   a200:
-    # SICK LMS1xx, self-filtered by bringup_main.launch.py (config/a200/lidar_filter.yaml).
-    scan_topic: sensors/lidar2d_0/scan_filtered
+    # a200/nav2.yaml fuses the SICK LMS1xx (lidar2d_0/scan_filtered, self-filtered by bringup_main.launch.py) and the
+    # RealSense depth scan (camera_0/scan) in its costmaps; the collision monitor uses the lidar.
+    scan_topic: params
 
 robots: {}
   # a300_00036:
