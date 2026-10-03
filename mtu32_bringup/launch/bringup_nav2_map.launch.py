@@ -97,17 +97,27 @@ def resolve_params_file(candidates, platform_model):
     raise RuntimeError(f'bringup_nav2_map: no Nav2 params file for platform {platform_model!r}, tried {tried}')
 
 
-def set_topics(node, topic):
-    """Point every `topic:` key (costmap observation sources, collision monitor sources) at topic."""
+def map_topics(node, fn):
+    """Replace every `topic:` value (costmap observation sources, collision monitor sources) with fn(value)."""
     if isinstance(node, dict):
         for key, value in node.items():
-            if key == 'topic':
-                node[key] = topic
+            if key == 'topic' and isinstance(value, str):
+                node[key] = fn(value)
             else:
-                set_topics(value, topic)
+                map_topics(value, fn)
     elif isinstance(node, list):
         for value in node:
-            set_topics(value, topic)
+            map_topics(value, fn)
+
+
+def in_namespace(topic, namespace):
+    """The topic in this robot's namespace: relative -> absolute, another robot's /<ns>/sensors/... -> ours."""
+    if not topic.startswith('/'):
+        return f'/{namespace}/{topic}'
+    parts = topic.split('/')
+    if len(parts) > 3 and parts[2] == 'sensors':
+        return '/'.join(['', namespace] + parts[2:])
+    return topic
 
 
 def launch_setup(context, *args, **kwargs):
@@ -130,10 +140,8 @@ def launch_setup(context, *args, **kwargs):
     scan_topic = arg('scan_topic') or profile.get('scan_topic', 'auto')
     if scan_topic == 'auto':
         scan_topic = 'sensors/lidar2d_0/scan_filtered' if sensors.get('lidar2d') else 'sensors/camera_0/scan'
-    relative_topic = scan_topic.removeprefix(f'/{namespace}/')
-    sensor_type = next((t for t in ('lidar2d', 'camera') if relative_topic.startswith(f'sensors/{t}_')), None)
-    if not scan_topic.startswith('/'):
-        scan_topic = f'/{namespace}/{scan_topic}'
+    if scan_topic != 'params':
+        scan_topic = in_namespace(scan_topic, namespace)
 
     map_yaml_file = arg('map') or profile.get('map', '')
     if map_yaml_file and not os.path.isabs(map_yaml_file):
@@ -142,16 +150,24 @@ def launch_setup(context, *args, **kwargs):
     with open(params_file) as f:
         params = yaml.safe_load(f)
     params = merge(params, profile.get('param_overrides'))
-    set_topics(params, scan_topic)
+    if scan_topic == 'params':
+        map_topics(params, lambda topic: in_namespace(topic, namespace))
+    else:
+        map_topics(params, lambda topic: scan_topic)
+    topics = set()
+    map_topics(params, lambda topic: topics.add(topic) or topic)
     with tempfile.NamedTemporaryFile('w', prefix=f'{namespace}_', suffix='_nav2_map.yaml', delete=False) as f:
         yaml.safe_dump(params, f)
         params_file_out = f.name
 
     messages = [LogInfo(msg=f'bringup_nav2_map: {namespace} ({platform_model}) params {params_file}, '
-                            f'scan {scan_topic}, map {map_yaml_file} -> {params_file_out}')]
-    if sensor_type and not sensors.get(sensor_type):
-        messages.append(LogInfo(msg=f'bringup_nav2_map: WARNING {scan_topic} needs a {sensor_type} sensor, '
-                                    f'but robot.yaml has none; set scan_topic for {namespace} in nav2_robots.yaml'))
+                            f'scan {", ".join(sorted(topics))}, map {map_yaml_file} -> {params_file_out}')]
+    for topic in sorted(topics):
+        relative_topic = topic.removeprefix(f'/{namespace}/')
+        sensor_type = next((t for t in ('lidar2d', 'camera') if relative_topic.startswith(f'sensors/{t}_')), None)
+        if sensor_type and not sensors.get(sensor_type):
+            messages.append(LogInfo(msg=f'bringup_nav2_map: WARNING {topic} needs a {sensor_type} sensor, '
+                                        f'but robot.yaml has none; set scan_topic for {namespace} in nav2_robots.yaml'))
 
     use_namespace = LaunchConfiguration('use_namespace')
     slam = LaunchConfiguration('slam')
