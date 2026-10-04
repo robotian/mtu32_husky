@@ -41,6 +41,8 @@ ARGUMENTS = [
                           choices=['true', 'false'], description="the simulator's /clock (default: $USE_SIM_TIME)"),
     DeclareLaunchArgument('datum', default_value=SIM_DATUM,
                           description="navsat_transform datum 'lat, lon, yaw'; empty = keep the params file's"),
+    DeclareLaunchArgument('ekf_publish_tf', default_value='false', choices=['true', 'false'],
+                          description="ekf_global_node's own map->odom TF (false: ref_localizer publishes it)"),
     DeclareLaunchArgument('params_file', default_value='',
                           description='default: config/<platform>/dual_duro_heading.yaml (or j100) of mtu32_bringup'),
 ]
@@ -72,6 +74,8 @@ def launch_setup(context, *args, **kwargs):
         navsat['datum'] = [float(v) for v in datum.split(',')]
     ekf = params['/**/ekf_global_node']['ros__parameters']
     ekf['imu0'] = f'sensors/{att}/heading_imu'
+    # odometry/global only: bringup_main's ref_localizer is the one map -> odom publisher (source gps / auto)
+    ekf['publish_tf'] = LaunchConfiguration('ekf_publish_tf').perform(context) == 'true'
     with tempfile.NamedTemporaryFile('w', suffix='_dual_duro_sim.yaml', delete=False) as f:
         yaml.safe_dump({'/**/navsat_transform': params['/**/navsat_transform'],
                         '/**/ekf_global_node': params['/**/ekf_global_node']}, f)

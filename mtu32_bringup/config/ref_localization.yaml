@@ -1,0 +1,32 @@
+# Indoor / outdoor global localization (bringup_main.launch.py): ref_localizer is the robot's only map -> odom
+# publisher; natnet_ref_pose (real robots only; the simulator publishes ref_pose itself) gives it the motion
+# capture pose. See mocap_fake_localizer's README. Per-robot values (rigid body name, base_link offset, a saved
+# anchor) go in config/ref_localization/<namespace>.yaml, loaded after this file.
+
+/**/ref_localizer:
+  ros__parameters:
+    # auto: the reference pose (mocap / simulator) while it arrives, else GPS (odometry/global)
+    # ref | gps: only that one;  external: SLAM / AMCL publishes map -> odom
+    source: auto
+    # fixed: map_pose_in_ref (or anchor_file, when set);  start: where the robot starts
+    # external: measured from SLAM / AMCL's map -> base_link (with source external or gps)
+    anchor: fixed
+    # map's pose in ref_frame [x, y, z, qx, qy, qz, qw]. In the simulator ref_frame is the world frame, which
+    # is also the GPS map frame (the sim's datum is its origin), so identity keeps both sources consistent.
+    map_pose_in_ref: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    # a file written by ~/save_anchor (default ~/.ros/ref_anchor_<ns>.yaml): with anchor fixed, read instead of
+    # map_pose_in_ref. Empty = not used.
+    anchor_file: ""
+    ref_timeout: 0.5
+    gps_timeout: 2.0
+    publish_rate: 30.0
+    transform_tolerance: 0.1
+
+/**/natnet_ref_pose:
+  ros__parameters:
+    server_ip: 192.168.50.80   # Motive
+    multicast_group: 239.255.42.99
+    rigid_body: ""             # empty = the robot's namespace (name the rigid body after the robot in Motive)
+    up_axis: z
+    base_link_offset: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    max_rate: 50.0

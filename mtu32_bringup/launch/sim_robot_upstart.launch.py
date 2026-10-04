@@ -44,9 +44,13 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_lifecycle_manager', default_value='false',
                           choices=['true', 'false'],
                           description='Enable bond connection during node activation'),    
-    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='false',
-                          choices=['true', 'false'],
-                          description=''),
+    DeclareLaunchArgument('ref_source', default_value='',
+                          choices=['', 'auto', 'ref', 'gps', 'external'],
+                          description="ref_localizer's map -> odom source (empty = config/ref_localization.yaml's: "
+                                      "auto = the sim's ref_pose, else GPS)"),
+    DeclareLaunchArgument('ref_anchor', default_value='',
+                          choices=['', 'fixed', 'start', 'external'],
+                          description="where ref_localizer puts map in ref_frame (empty = the config's: fixed)"),
     DeclareLaunchArgument('moveit_delay', default_value='5.0',
                           description='Delay before starting MoveIt'),
     DeclareLaunchArgument('use_gps_localization', default_value='true',
@@ -71,7 +75,6 @@ ARGUMENTS = [
 def launch_setup(context, *args, **kwargs):
     pkg_mtu32_bringup = get_package_share_directory('mtu32_bringup')
     setup_path = LaunchConfiguration('setup_path')
-    use_mocap_fake_localizer = LaunchConfiguration('use_mocap_fake_localizer')
     moveit_delay_val = float(LaunchConfiguration('moveit_delay').perform(context))
 
     # Read robot YAML
@@ -118,14 +121,17 @@ def launch_setup(context, *args, **kwargs):
             ('scan_topic', LaunchConfiguration('scan_topic')),
             ('autostart', LaunchConfiguration('autostart')),
             ('use_lifecycle_manager', LaunchConfiguration('use_lifecycle_manager')),
-            ('use_mocap_fake_localizer', use_mocap_fake_localizer),
+            # the sim publishes ref_pose (SIM_REF_POSE) itself: no Motive client
+            ('use_natnet', 'false'),
+            ('ref_source', LaunchConfiguration('ref_source')),
+            ('ref_anchor', LaunchConfiguration('ref_anchor')),
             ('moveit_delay', LaunchConfiguration('moveit_delay')),
             ('use_sim_time', LaunchConfiguration('use_sim_time')),
         ],
     )
 
-    # Dual-GPS heading + navsat_transform + ekf_global_node: the map->odom TF that the map-based Nav2 launches
-    # (e.g. bringup_nav2_map_a300.launch.py) wait for. It raises without two GPS sensors, which the generic
+    # Dual-GPS heading + navsat_transform + ekf_global_node: odometry/global, which bringup_main's ref_localizer
+    # turns into map->odom when GPS is its source (the EKF's own TF is off). It raises without two GPS sensors, which the generic
     # models (robot.<model>.yaml.tmpl) don't have, so it is skipped for them instead of failing the whole upstart.
     # use_sim_time for every node started below, including those of the included launch files that don't pass it
     # themselves (a node's own parameters/params file still override it; Nav2's are rewritten in bringup_nav2_map).
@@ -143,8 +149,8 @@ def launch_setup(context, *args, **kwargs):
             actions.append(LogInfo(msg=f'{namespace}: {len(gps)} GPS sensor(s) in robot.yaml, '
                                        'skipping sim_swift_nav_dual (dual-GPS localization needs two)'))
 
-    # Nav2 on a map (map_server + navigation servers, no AMCL): map->odom comes from the GPS localization above
-    # or the mocap fake localizer; without either, Nav2's costmaps wait for it.
+    # Nav2 on a map (map_server + navigation servers, no AMCL): map->odom comes from ref_localizer (the sim's
+    # ref_pose, or the GPS localization above); without either, Nav2's costmaps wait for it.
     if LaunchConfiguration('use_nav2').perform(context) == 'true':
         actions.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution([

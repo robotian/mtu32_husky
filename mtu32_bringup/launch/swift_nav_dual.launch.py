@@ -28,6 +28,9 @@ ARGUMENTS = [
     DeclareLaunchArgument('setup_path',
                           default_value='/etc/clearpath/',
                           description='Clearpath setup path'),
+    DeclareLaunchArgument('ekf_publish_tf', default_value='false', choices=['true', 'false'],
+                          description="ekf_global_node's own map->odom TF (false: bringup_main's ref_localizer "
+                                      "publishes it from odometry/global)"),
 ]
 
 
@@ -135,7 +138,8 @@ def launch_setup(context, *args, **kwargs):
                 parameters=[
                     PathJoinSubstitution(
                         [get_package_share_directory("mtu32_bringup"), "config", f'{platform_model}', "dual_duro_heading.yaml"]
-                    )   
+                    ),
+                    {'publish_tf': LaunchConfiguration('ekf_publish_tf').perform(context) == 'true'},
                 ],
             ),
         ],

@@ -9,6 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- CMakeLists.txt find_package()s both; bringup_main.launch.py runs mocap_fake_localizer's nodes -->
   <build_depend>nav2_common</build_depend>
   <depend>mocap_fake_localizer</depend>
 

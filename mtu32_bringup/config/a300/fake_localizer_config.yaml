@@ -10,7 +10,7 @@
 
     # 1. TF frame names
     mocap_odom_topic: "ground_truth/odom"  # The topic where the mocap odometry is published
-    odom_topic: "platform/odom_filtered"  # The topic where the fake odometry will be published
+    odom_topic: "platform/odom/filtered"  # The topic where the fake odometry will be published
     
     ref_frame: "base_mocap"  # The reference frame for the transform (e.g., "base_mocap")
     ground_truth_frame: "base_footprint"  # The frame of the mocap odometry (e.g., "ground_truth")

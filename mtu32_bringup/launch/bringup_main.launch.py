@@ -42,9 +42,21 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_lifecycle_manager', default_value='false',
                           choices=['true', 'false'],
                           description='Enable bond connection during node activation'),    
-    DeclareLaunchArgument('use_mocap_fake_localizer', default_value='false',
+    # Global localization (config/ref_localization.yaml): ref_localizer is the only map -> odom publisher, from
+    # the motion capture / simulator reference pose or from GPS (the GPS EKF's own TF is off).
+    DeclareLaunchArgument('use_ref_localizer', default_value='true',
                           choices=['true', 'false'],
-                          description=''),
+                          description='ref_localizer: map -> odom from the reference pose (mocap / sim) or GPS'),
+    DeclareLaunchArgument('use_natnet', default_value='true',
+                          choices=['true', 'false'],
+                          description='natnet_ref_pose: the OptiTrack Motive client (false in the simulator, '
+                                      'which publishes ref_pose itself)'),
+    DeclareLaunchArgument('ref_source', default_value='',
+                          choices=['', 'auto', 'ref', 'gps', 'external'],
+                          description="ref_localizer's source (empty = config/ref_localization.yaml's)"),
+    DeclareLaunchArgument('ref_anchor', default_value='',
+                          choices=['', 'fixed', 'start', 'external'],
+                          description="ref_localizer's anchor (empty = config/ref_localization.yaml's)"),
     DeclareLaunchArgument('moveit_delay', default_value='5.0',
                           description='Delay before starting MoveIt'),
     # DeclareLaunchArgument('use_composition_nav',
@@ -58,7 +70,6 @@ ARGUMENTS = [
 def launch_setup(context, *args, **kwargs):
     pkg_mtu32_bringup = get_package_share_directory('mtu32_bringup')
     setup_path = LaunchConfiguration('setup_path')
-    use_mocap_fake_localizer = LaunchConfiguration('use_mocap_fake_localizer')
     moveit_delay_val = float(LaunchConfiguration('moveit_delay').perform(context))
 
     # Read robot YAML
@@ -71,6 +82,14 @@ def launch_setup(context, *args, **kwargs):
         ('/tf', f'/{namespace}/tf'),
         ('/tf_static', f'/{namespace}/tf_static'),
     ]
+
+    # shared localization params, then this robot's own (rigid body name, base_link offset), if any
+    ref_params = [os.path.join(pkg_mtu32_bringup, 'config', 'ref_localization.yaml')]
+    robot_ref_params = os.path.join(pkg_mtu32_bringup, 'config', 'ref_localization', f'{namespace}.yaml')
+    if os.path.isfile(robot_ref_params):
+        ref_params.append(robot_ref_params)
+    ref_overrides = {k: v for k, v in (('source', LaunchConfiguration('ref_source').perform(context)),
+                                       ('anchor', LaunchConfiguration('ref_anchor').perform(context))) if v}
 
     depth2scan_param_config = os.path.join(
         pkg_mtu32_bringup, 'config', f'{platform_model}', 'depth2scan.yaml'
@@ -128,18 +147,25 @@ def launch_setup(context, *args, **kwargs):
 
             Node(
                 package='mocap_fake_localizer',
-                executable='mocap_fake_localizer_node',
-                name='mocap_fake_localizer_node',
+                executable='ref_localizer.py',
+                name='ref_localizer',
                 output='screen',
                 namespace=f'/{namespace}',
-                parameters=[
-                    PathJoinSubstitution(
-                        [pkg_mtu32_bringup, "config", f'{platform_model}', "fake_localizer_config.yaml"]
-                    )
-                ],
-                remappings=remappings_tf,        
-                condition=IfCondition(use_mocap_fake_localizer),
-            ),  
+                parameters=ref_params + ([ref_overrides] if ref_overrides else []),
+                remappings=remappings_tf,
+                condition=IfCondition(LaunchConfiguration('use_ref_localizer')),
+            ),
+
+            Node(
+                package='mocap_fake_localizer',
+                executable='natnet_ref_pose.py',
+                name='natnet_ref_pose',
+                output='screen',
+                namespace=f'/{namespace}',
+                parameters=ref_params,
+                remappings=remappings_tf,
+                condition=IfCondition(LaunchConfiguration('use_natnet')),
+            ),
 
             Node(
                 package='depthimage_to_laserscan',
