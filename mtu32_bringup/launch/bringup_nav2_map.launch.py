@@ -150,6 +150,16 @@ def launch_setup(context, *args, **kwargs):
     with open(params_file) as f:
         params = yaml.safe_load(f)
     params = merge(params, profile.get('param_overrides'))
+    # Some config/<platform>/nav2*.yaml hardcode use_sim_time: false for a server, which would override the launch
+    # argument (navigation.launch.py's SetParameter only provides a default), so every node gets the argument's value.
+    def set_use_sim_time(node):
+        for key, value in node.items():
+            if key == 'ros__parameters' and isinstance(value, dict):
+                value['use_sim_time'] = arg('use_sim_time') == 'true'
+            elif isinstance(value, dict):  # costmaps are nested one level deeper (local_costmap: local_costmap:)
+                set_use_sim_time(value)
+
+    set_use_sim_time(params)
     if scan_topic == 'params':
         map_topics(params, lambda topic: in_namespace(topic, namespace))
     else:

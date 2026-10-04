@@ -21,7 +21,7 @@ from launch.substitutions import (
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
-from launch_ros.actions import Node, PushRosNamespace, SetRemap
+from launch_ros.actions import Node, PushRosNamespace, SetParameter, SetRemap
 from nav2_common.launch import RewrittenYaml
 
 from clearpath_config.clearpath_config import ClearpathConfig
@@ -98,9 +98,10 @@ def launch_setup(context, *args, **kwargs):
     ])
     
     # Fixed trailing comma tuple bug
+    use_sim_time = LaunchConfiguration('use_sim_time')
     moveit_node_action = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(launch_file_moveit),
-        launch_arguments=[('setup_path', setup_path)],
+        launch_arguments=[('setup_path', setup_path), ('use_sim_time', use_sim_time)],
     )
 
     launch_file_cut_stem_gamepad_file = PathJoinSubstitution([
@@ -109,6 +110,9 @@ def launch_setup(context, *args, **kwargs):
 
     load_nodes = GroupAction(        
         actions=[
+            # every node below, also those whose launch file doesn't pass use_sim_time itself
+            SetParameter('use_sim_time', use_sim_time),
+
             Node(
                 package="laser_filters",
                 executable="scan_to_scan_filter_chain",
@@ -174,13 +178,14 @@ def launch_setup(context, *args, **kwargs):
 
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_pcl_filter),
-                launch_arguments=[('setup_path', setup_path)],
+                launch_arguments=[('setup_path', setup_path), ('use_sim_time', use_sim_time)],
             ),
 
             
 
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_grid_cutter_filter),
+                launch_arguments=[('use_sim_time', use_sim_time)],
             ),
 
             TimerAction(
@@ -197,6 +202,7 @@ def launch_setup(context, *args, **kwargs):
 
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_cut_stem_gamepad_file),
+                launch_arguments=[('use_sim_time', use_sim_time)],
             ),                     
         ],
     )

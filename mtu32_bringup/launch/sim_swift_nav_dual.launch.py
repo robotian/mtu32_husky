@@ -30,13 +30,15 @@ from clearpath_config.common.utils.yaml import read_yaml
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 
 # setup_scene.py GPS_READ_SCRIPT _ORIGIN_LAT/_ORIGIN_LON: lat/lon of the Isaac world origin
 SIM_DATUM = '47.1211, -88.5455, 0.0'
 
 ARGUMENTS = [
     DeclareLaunchArgument('setup_path', default_value='/etc/clearpath/', description='Clearpath setup path'),
+    DeclareLaunchArgument('use_sim_time', default_value=os.environ.get('USE_SIM_TIME', 'false'),
+                          choices=['true', 'false'], description="the simulator's /clock (default: $USE_SIM_TIME)"),
     DeclareLaunchArgument('datum', default_value=SIM_DATUM,
                           description="navsat_transform datum 'lat, lon, yaw'; empty = keep the params file's"),
     DeclareLaunchArgument('params_file', default_value='',
@@ -78,6 +80,7 @@ def launch_setup(context, *args, **kwargs):
     remappings_tf = [('/tf', f'/{namespace}/tf'), ('/tf_static', f'/{namespace}/tf_static')]
 
     return [
+        SetParameter('use_sim_time', LaunchConfiguration('use_sim_time')),
         Node(
             package='duro_sim',
             executable='baseline_node',

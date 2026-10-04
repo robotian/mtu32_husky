@@ -8,7 +8,8 @@ patches what the simulator does differently:
   ekf_global_node publishes it (GPS + dual-antenna heading, the real outdoor flow) and the default params become
   config/<platform>/nav2_mapping.yaml when the platform has one (as bringup_nav2_mapping_j100.launch.py);
 * odometry comes straight from platform/odom instead of the EKF's platform/odom/filtered (overridable: odom_topic);
-* the simulated clock is wall time (no /clock), so use_sim_time stays false;
+* use_sim_time defaults to $USE_SIM_TIME (the robot container sets it when the sim publishes /clock) and is written
+  into every node's parameters (config/<platform>/nav2*.yaml hardcode false for some servers);
 * no map_server: the static layer is dropped from both costmaps and the global one becomes a fixed 100 x 100 m
   unknown-space grid centred on the map origin (the same approach as the real robots' nav2_mapless.yaml).
 
@@ -36,7 +37,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 
 ARGUMENTS = [
     DeclareLaunchArgument('setup_path', default_value='/etc/clearpath/', description='Clearpath setup path'),
@@ -47,6 +48,8 @@ ARGUMENTS = [
                           description='Nav2 params (default: config/<platform>/nav2.yaml of mtu32_bringup)'),
     DeclareLaunchArgument('gps', default_value='false',
                           description='map->odom comes from sim_swift_nav_dual.launch.py (no static map->odom)'),
+    DeclareLaunchArgument('use_sim_time', default_value=os.environ.get('USE_SIM_TIME', 'false'),
+                          choices=['true', 'false'], description="the simulator's /clock (default: $USE_SIM_TIME)"),
     DeclareLaunchArgument('autostart', default_value='true'),
     DeclareLaunchArgument('log_level', default_value='info'),
 ]
@@ -90,6 +93,15 @@ def launch_setup(context, *args, **kwargs):
                 patch(v)
 
     patch(params)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    def set_use_sim_time(node):
+        for key, value in node.items():
+            if key == 'ros__parameters' and isinstance(value, dict):
+                value['use_sim_time'] = use_sim_time == 'true'
+            elif isinstance(value, dict):  # costmaps are nested one level deeper (local_costmap: local_costmap:)
+                set_use_sim_time(value)
+
+    set_use_sim_time(params)
 
     for costmap in ('local_costmap', 'global_costmap'):
         p = params[costmap][costmap]['ros__parameters']
@@ -100,7 +112,7 @@ def launch_setup(context, *args, **kwargs):
     g = params['global_costmap']['global_costmap']['ros__parameters']
     g.update(rolling_window=False, width=100, height=100, origin_x=-50.0, origin_y=-50.0, resolution=0.05)
 
-    nodes = []
+    nodes = [SetParameter('use_sim_time', use_sim_time)]
     if filter_scan:
         footprint = yaml.safe_load(params['local_costmap']['local_costmap']['ros__parameters']['footprint'])
         xs, ys = [pt[0] for pt in footprint], [pt[1] for pt in footprint]
@@ -142,7 +154,7 @@ def launch_setup(context, *args, **kwargs):
             PythonLaunchDescriptionSource(os.path.join(pkg, 'launch', 'navigation_launch.py')),
             launch_arguments={
                 'namespace': namespace,
-                'use_sim_time': 'false',
+                'use_sim_time': use_sim_time,
                 'autostart': LaunchConfiguration('autostart').perform(context),
                 'params_file': params,
                 'use_composition': 'False',

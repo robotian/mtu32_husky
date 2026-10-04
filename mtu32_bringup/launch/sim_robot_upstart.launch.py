@@ -23,14 +23,15 @@ from launch.substitutions import (
 )
 
 from launch.conditions import IfCondition, UnlessCondition
-from launch_ros.actions import PushRosNamespace, SetRemap, Node
+from launch_ros.actions import PushRosNamespace, SetParameter, SetRemap, Node
 from nav2_common.launch import RewrittenYaml
 from launch.substitutions import PythonExpression
 
 ARGUMENTS = [
-    DeclareLaunchArgument('use_sim_time', default_value='false',
+    # The multirobot_sim robot containers set USE_SIM_TIME=true when the simulator publishes /clock; unset elsewhere.
+    DeclareLaunchArgument('use_sim_time', default_value=os.environ.get('USE_SIM_TIME', 'false'),
                           choices=['true', 'false'],
-                          description='Use sim time'),
+                          description='Use the simulator\'s /clock for every node (default: $USE_SIM_TIME or false)'),
     DeclareLaunchArgument('setup_path',
                           default_value='/etc/clearpath/',
                           description='Clearpath setup path'),
@@ -119,13 +120,16 @@ def launch_setup(context, *args, **kwargs):
             ('use_lifecycle_manager', LaunchConfiguration('use_lifecycle_manager')),
             ('use_mocap_fake_localizer', use_mocap_fake_localizer),
             ('moveit_delay', LaunchConfiguration('moveit_delay')),
+            ('use_sim_time', LaunchConfiguration('use_sim_time')),
         ],
     )
 
     # Dual-GPS heading + navsat_transform + ekf_global_node: the map->odom TF that the map-based Nav2 launches
     # (e.g. bringup_nav2_map_a300.launch.py) wait for. It raises without two GPS sensors, which the generic
     # models (robot.<model>.yaml.tmpl) don't have, so it is skipped for them instead of failing the whole upstart.
-    actions = [load_nodes, bringup_main]
+    # use_sim_time for every node started below, including those of the included launch files that don't pass it
+    # themselves (a node's own parameters/params file still override it; Nav2's are rewritten in bringup_nav2_map).
+    actions = [SetParameter('use_sim_time', LaunchConfiguration('use_sim_time')), load_nodes, bringup_main]
     gps = clearpath_config.sensors.get_all_gps()
     if LaunchConfiguration('use_gps_localization').perform(context) == 'true':
         if len(gps) >= 2:
@@ -133,7 +137,7 @@ def launch_setup(context, *args, **kwargs):
                 PythonLaunchDescriptionSource(PathJoinSubstitution([
                     pkg_mtu32_bringup, 'launch', 'sim_swift_nav_dual.launch.py'
                 ])),
-                launch_arguments=[('setup_path', setup_path)],
+                launch_arguments=[('setup_path', setup_path), ('use_sim_time', LaunchConfiguration('use_sim_time'))],
             ))
         else:
             actions.append(LogInfo(msg=f'{namespace}: {len(gps)} GPS sensor(s) in robot.yaml, '
