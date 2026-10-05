@@ -126,6 +126,8 @@ def launch_setup(context, *args, **kwargs):
             ('ref_source', LaunchConfiguration('ref_source')),
             ('ref_anchor', LaunchConfiguration('ref_anchor')),
             ('moveit_delay', LaunchConfiguration('moveit_delay')),
+            # no clearpath-manipulators service in the sim: bringup_main's MoveIt is the only one
+            ('moveit', 'true'),
             ('use_sim_time', LaunchConfiguration('use_sim_time')),
         ],
     )

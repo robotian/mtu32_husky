@@ -8,6 +8,7 @@ from launch.actions import (
     GroupAction,
     IncludeLaunchDescription,
     OpaqueFunction,
+    LogInfo,
     TimerAction
 )
 
@@ -57,6 +58,13 @@ ARGUMENTS = [
     DeclareLaunchArgument('ref_anchor', default_value='',
                           choices=['', 'fixed', 'start', 'external'],
                           description="ref_localizer's anchor (empty = config/ref_localization.yaml's)"),
+    # MoveIt: on a real robot whose robot.yaml has manipulators.moveit.enable: true, Clearpath's
+    # clearpath-manipulators service already runs move_group, so a second one here must not start. The simulator
+    # has no clearpath-manipulators service: sim_robot_upstart.launch.py passes moveit:=true.
+    DeclareLaunchArgument('moveit', default_value='auto',
+                          choices=['auto', 'true', 'false'],
+                          description="start MoveIt here (moveit.launch.py: move_group + servo_node); auto = "
+                                      "unless robot.yaml's manipulators.moveit.enable (Clearpath's own move_group)"),
     DeclareLaunchArgument('moveit_delay', default_value='5.0',
                           description='Delay before starting MoveIt'),
     # DeclareLaunchArgument('use_composition_nav',
@@ -77,6 +85,9 @@ def launch_setup(context, *args, **kwargs):
     clearpath_config = ClearpathConfig(config)
     platform_model = clearpath_config.platform.get_platform_model()
     namespace = clearpath_config.system.namespace
+    clearpath_moveit = bool(((config.get('manipulators') or {}).get('moveit') or {}).get('enable', False))
+    moveit_arg = LaunchConfiguration('moveit').perform(context)
+    start_moveit = moveit_arg == 'true' or (moveit_arg == 'auto' and not clearpath_moveit)
 
     remappings_tf = [
         ('/tf', f'/{namespace}/tf'),
@@ -209,21 +220,24 @@ def launch_setup(context, *args, **kwargs):
                 launch_arguments=[('setup_path', setup_path), ('use_sim_time', use_sim_time)],
             ),
 
-            # TODO: the cutter stack below (grid cutter, MoveIt + servo, pruner_server on /dev/ttyOpenCR, cut_stem
-            # gamepad) is j100_0921's hardware -- only j100_0921 has the cutter -- but runs on every robot, e.g.
-            # a300_00036 (2026-10-05: pruner_server can't open /dev/ttyOpenCR, gamepad under /j100_0921/...).
-            # Gate it per robot (e.g. a `cutter` launch argument, default on for j100_0921 only), keeping the sim's
-            # j100_0921 as is; open question: should a300_00036 run MoveIt for its own Kinova arm?
+            # TODO: the cutter stack below (grid cutter, pruner_server on /dev/ttyOpenCR, cut_stem gamepad, which
+            # drives the arm through servo_node) is j100_0921's hardware -- only j100_0921 has the cutter -- but runs
+            # on every robot, e.g. a300_00036 (2026-10-05: pruner_server can't open /dev/ttyOpenCR, gamepad under
+            # /j100_0921/...). Gate it per robot (e.g. a `cutter` launch argument, default on for j100_0921 only),
+            # keeping the sim's j100_0921 as is. MoveIt itself is gated by `moveit` (above).
 
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_grid_cutter_filter),
                 launch_arguments=[('use_sim_time', use_sim_time)],
             ),
 
-            # TimerAction(
-            #     period=moveit_delay_val,
-            #     actions=[moveit_node_action]
-            # ),
+            LogInfo(msg=f'MoveIt: {"starting move_group + servo_node here" if start_moveit else "not started here"} '
+                        f'(moveit:={moveit_arg}, robot.yaml manipulators.moveit.enable: {clearpath_moveit})'),
+            TimerAction(
+                period=moveit_delay_val,
+                actions=[moveit_node_action],
+                condition=IfCondition(str(start_moveit).lower()),
+            ),
 
             Node(
                 package='pruner_action_server',
