@@ -209,17 +209,21 @@ def launch_setup(context, *args, **kwargs):
                 launch_arguments=[('setup_path', setup_path), ('use_sim_time', use_sim_time)],
             ),
 
-            
+            # TODO: the cutter stack below (grid cutter, MoveIt + servo, pruner_server on /dev/ttyOpenCR, cut_stem
+            # gamepad) is j100_0921's hardware -- only j100_0921 has the cutter -- but runs on every robot, e.g.
+            # a300_00036 (2026-10-05: pruner_server can't open /dev/ttyOpenCR, gamepad under /j100_0921/...).
+            # Gate it per robot (e.g. a `cutter` launch argument, default on for j100_0921 only), keeping the sim's
+            # j100_0921 as is; open question: should a300_00036 run MoveIt for its own Kinova arm?
 
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_grid_cutter_filter),
                 launch_arguments=[('use_sim_time', use_sim_time)],
             ),
 
-            TimerAction(
-                period=moveit_delay_val,
-                actions=[moveit_node_action]
-            ),
+            # TimerAction(
+            #     period=moveit_delay_val,
+            #     actions=[moveit_node_action]
+            # ),
 
             Node(
                 package='pruner_action_server',

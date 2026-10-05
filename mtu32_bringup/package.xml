@@ -12,6 +12,8 @@
   <!-- CMakeLists.txt find_package()s both; bringup_main.launch.py runs mocap_fake_localizer's nodes -->
   <build_depend>nav2_common</build_depend>
   <depend>mocap_fake_localizer</depend>
+  <!-- moveit.launch.py (included by bringup_main.launch.py) starts moveit_servo's servo_node -->
+  <exec_depend>moveit_servo</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
