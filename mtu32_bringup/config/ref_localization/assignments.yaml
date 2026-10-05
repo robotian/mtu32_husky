@@ -1,4 +1,10 @@
 # Motive rigid body per robot (natnet_ref_pose's rigid_body), written by multirobot_sim's web UI (tools/sim_ui).
 # A robot without an entry follows the rigid body named after its namespace. Loaded by bringup_main.launch.py
 # after ../ref_localization.yaml and before <namespace>.yaml.
-{}
+{
+  "/a300_00036/natnet_ref_pose": {
+    "ros__parameters": {
+      "rigid_body": "Rigid Body 1"
+    }
+  }
+}
