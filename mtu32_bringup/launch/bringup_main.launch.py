@@ -83,11 +83,13 @@ def launch_setup(context, *args, **kwargs):
         ('/tf_static', f'/{namespace}/tf_static'),
     ]
 
-    # shared localization params, then this robot's own (rigid body name, base_link offset), if any
+    # shared localization params, the web UI's rigid body assignments (keyed by /<ns>/natnet_ref_pose), then this
+    # robot's own hand-written file (rigid body name, base_link offset), if any
     ref_params = [os.path.join(pkg_mtu32_bringup, 'config', 'ref_localization.yaml')]
-    robot_ref_params = os.path.join(pkg_mtu32_bringup, 'config', 'ref_localization', f'{namespace}.yaml')
-    if os.path.isfile(robot_ref_params):
-        ref_params.append(robot_ref_params)
+    for name in ('assignments.yaml', f'{namespace}.yaml'):
+        path = os.path.join(pkg_mtu32_bringup, 'config', 'ref_localization', name)
+        if os.path.isfile(path):
+            ref_params.append(path)
     ref_overrides = {k: v for k, v in (('source', LaunchConfiguration('ref_source').perform(context)),
                                        ('anchor', LaunchConfiguration('ref_anchor').perform(context))) if v}
 

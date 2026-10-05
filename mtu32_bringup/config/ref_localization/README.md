@@ -1,5 +1,9 @@
-Per-robot overrides of `../ref_localization.yaml`, one file per robot namespace (`<namespace>.yaml`, e.g.
-`a200_0284.yaml`), loaded after the shared file by `bringup_main.launch.py`. Typical content:
+Per-robot overrides of `../ref_localization.yaml`, loaded after it by `bringup_main.launch.py`:
+
+- `assignments.yaml`: which Motive rigid body each robot follows, written by multirobot_sim's web UI
+  (Motion capture card), keyed by node (`/<ns>/natnet_ref_pose`).
+- `<namespace>.yaml` (e.g. `a200_0284.yaml`), hand-written, loaded last. With `colcon build --symlink-install` a
+  *new* file here needs `colcon build --packages-select mtu32_bringup` before a launch sees it. Typical content:
 
 ```yaml
 /**/natnet_ref_pose:
