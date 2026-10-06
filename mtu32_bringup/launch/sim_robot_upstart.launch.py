@@ -59,8 +59,8 @@ ARGUMENTS = [
                                       'map->odom); skipped if robot.yaml has fewer than two GPS sensors'),
     DeclareLaunchArgument('use_nav2', default_value='true',
                           choices=['true', 'false'],
-                          description='Nav2 on a static map (bringup_nav2_map.launch.py, settings per robot from '
-                                      'config/nav2_robots.yaml)'),
+                          description='Nav2 on a static map (bringup_main starts bringup_nav2_map.launch.py, settings '
+                                      'per robot from config/nav2_robots.yaml)'),
     DeclareLaunchArgument('nav2_map', default_value='',
                           description='Map yaml for Nav2, in mtu32_bringup/map or absolute (default: from '
                                       'nav2_robots.yaml)'),
@@ -129,6 +129,9 @@ def launch_setup(context, *args, **kwargs):
             # no clearpath-manipulators service in the sim: bringup_main's MoveIt is the only one
             ('moveit', 'true'),
             ('use_sim_time', LaunchConfiguration('use_sim_time')),
+            # Nav2 on a map (bringup_nav2_map.launch.py) is started by bringup_main, as on a real robot
+            ('use_nav2', LaunchConfiguration('use_nav2')),
+            ('nav2_map', LaunchConfiguration('nav2_map')),
         ],
     )
 
@@ -136,7 +139,8 @@ def launch_setup(context, *args, **kwargs):
     # turns into map->odom when GPS is its source (the EKF's own TF is off). It raises without two GPS sensors, which the generic
     # models (robot.<model>.yaml.tmpl) don't have, so it is skipped for them instead of failing the whole upstart.
     # use_sim_time for every node started below, including those of the included launch files that don't pass it
-    # themselves (a node's own parameters/params file still override it; Nav2's are rewritten in bringup_nav2_map).
+    # themselves (a node's own parameters/params file still override it; Nav2's are rewritten in bringup_nav2_map,
+    # which bringup_main starts).
     actions = [SetParameter('use_sim_time', LaunchConfiguration('use_sim_time')), load_nodes, bringup_main]
     gps = clearpath_config.sensors.get_all_gps()
     if LaunchConfiguration('use_gps_localization').perform(context) == 'true':
@@ -150,20 +154,6 @@ def launch_setup(context, *args, **kwargs):
         else:
             actions.append(LogInfo(msg=f'{namespace}: {len(gps)} GPS sensor(s) in robot.yaml, '
                                        'skipping sim_swift_nav_dual (dual-GPS localization needs two)'))
-
-    # Nav2 on a map (map_server + navigation servers, no AMCL): map->odom comes from ref_localizer (the sim's
-    # ref_pose, or the GPS localization above); without either, Nav2's costmaps wait for it.
-    if LaunchConfiguration('use_nav2').perform(context) == 'true':
-        actions.append(IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(PathJoinSubstitution([
-                pkg_mtu32_bringup, 'launch', 'bringup_nav2_map.launch.py'
-            ])),
-            launch_arguments=[
-                ('setup_path', setup_path),
-                ('use_sim_time', LaunchConfiguration('use_sim_time')),
-                ('map', LaunchConfiguration('nav2_map')),
-            ],
-        ))
 
     return actions
 

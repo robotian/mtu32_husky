@@ -36,7 +36,7 @@ ARGUMENTS = [
                           description='Clearpath setup path'),
     DeclareLaunchArgument('scan_topic',
                           default_value='',
-                          description='Override the default 2D laserscan topic'),
+                          description="Override the default 2D laserscan topic (Nav2's; empty = nav2_robots.yaml's)"),
     DeclareLaunchArgument('autostart', default_value='true',
                           choices=['true', 'false'],
                           description='Automatically startup the slamtoolbox. Ignored when use_lifecycle_manager is true.'),  # noqa: E501
@@ -67,6 +67,16 @@ ARGUMENTS = [
                                       "unless robot.yaml's manipulators.moveit.enable (Clearpath's own move_group)"),
     DeclareLaunchArgument('moveit_delay', default_value='5.0',
                           description='Delay before starting MoveIt'),
+    # Nav2 on a static map from the start (bringup_nav2_map.launch.py: map_server + navigation servers, no AMCL;
+    # params file, scan topic and map per robot from config/nav2_robots.yaml). map->odom is ref_localizer's (above);
+    # until it publishes, Nav2's costmaps wait for it.
+    DeclareLaunchArgument('use_nav2', default_value='true',
+                          choices=['true', 'false'],
+                          description='Nav2 on a static map (bringup_nav2_map.launch.py, settings per robot from '
+                                      'config/nav2_robots.yaml)'),
+    DeclareLaunchArgument('nav2_map', default_value='',
+                          description='Map yaml for Nav2, in mtu32_bringup/map or absolute (default: from '
+                                      'nav2_robots.yaml)'),
     # DeclareLaunchArgument('use_composition_nav',
     #                        default_value='False',
     #                        description='Whether to use composed bringup',
@@ -252,7 +262,17 @@ def launch_setup(context, *args, **kwargs):
             ),                     
         ],
     )
-    return [load_nodes]
+    nav2 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([pkg_mtu32_bringup, 'launch', 'bringup_nav2_map.launch.py'])),
+        launch_arguments=[
+            ('setup_path', setup_path),
+            ('use_sim_time', use_sim_time),
+            ('map', LaunchConfiguration('nav2_map')),
+            ('scan_topic', LaunchConfiguration('scan_topic')),
+        ],
+        condition=IfCondition(LaunchConfiguration('use_nav2')),
+    )
+    return [load_nodes, nav2]
 
     
 def generate_launch_description():
