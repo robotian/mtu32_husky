@@ -32,7 +32,9 @@
 # modification, is not permitted without the express permission
 # of Clearpath Robotics.
 import os
+import tempfile
 import xacro
+import yaml
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, ExecuteProcess, RegisterEventHandler
@@ -128,6 +130,20 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
+    # Sim only (use_sim_time): MoveIt aborts a move it thinks overran (generated moveit.yaml: 1.2 x the planned
+    # duration + 0.5 s). In the sim, moveit_sim_bridge plays the trajectory on sim time and reports done once the
+    # arm settles (its settle_timeout, 10 s), while data through the fleet's shared zenoh router can stall for
+    # seconds when sessions come and go -- a move then timed out although the arm got there. The margin above the
+    # bridge's settle_timeout leaves the decision to the bridge. Real robots keep the generated values.
+    # A file scoped like moveit.yaml (<namespace>/move_group): a parameters dict goes to a `/**` file, and rcl lets
+    # moveit.yaml's node-specific value win over that whatever the order.
+    sim_execution = []
+    if use_sim_time.perform(context).lower() == 'true':
+        sim_execution = [os.path.join(tempfile.gettempdir(), f'moveit_sim_execution_{namespace}.yaml')]
+        with open(sim_execution[0], 'w') as f:
+            yaml.safe_dump({namespace: {'move_group': {'ros__parameters': {
+                'trajectory_execution': {'allowed_goal_duration_margin': 12.0}}}}}, f)
+
     return [
         Node(
             package='moveit_ros_move_group',
@@ -136,6 +152,7 @@ def launch_setup(context, *args, **kwargs):
             namespace=namespace,
             parameters=[
                 moveit_yaml,
+                *sim_execution,
                 robot_description,
                 robot_description_semantic,
                 {'use_sim_time': use_sim_time},
