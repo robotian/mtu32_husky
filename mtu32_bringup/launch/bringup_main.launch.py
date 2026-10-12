@@ -97,7 +97,10 @@ def launch_setup(context, *args, **kwargs):
     namespace = clearpath_config.system.namespace
     clearpath_moveit = bool(((config.get('manipulators') or {}).get('moveit') or {}).get('enable', False))
     moveit_arg = LaunchConfiguration('moveit').perform(context)
-    start_moveit = moveit_arg == 'true' or (moveit_arg == 'auto' and not clearpath_moveit)
+    # Without an arm in robot.yaml (j100_0922: manipulators commented out) nothing arm-related starts: MoveIt and
+    # the grid cutter abort on a description without arm_0_end_effector_link, servo_node then segfaults.
+    has_arm = bool((config.get('manipulators') or {}).get('arms'))
+    start_moveit = has_arm and (moveit_arg == 'true' or (moveit_arg == 'auto' and not clearpath_moveit))
 
     remappings_tf = [
         ('/tf', f'/{namespace}/tf'),
@@ -228,6 +231,7 @@ def launch_setup(context, *args, **kwargs):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_pcl_filter),
                 launch_arguments=[('setup_path', setup_path), ('use_sim_time', use_sim_time)],
+                condition=IfCondition(str(has_arm).lower()),
             ),
 
             # TODO: the cutter stack below (grid cutter, pruner_server on /dev/ttyOpenCR, cut_stem gamepad, which
@@ -239,10 +243,12 @@ def launch_setup(context, *args, **kwargs):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_grid_cutter_filter),
                 launch_arguments=[('use_sim_time', use_sim_time)],
+                condition=IfCondition(str(has_arm).lower()),
             ),
 
             LogInfo(msg=f'MoveIt: {"starting move_group + servo_node here" if start_moveit else "not started here"} '
-                        f'(moveit:={moveit_arg}, robot.yaml manipulators.moveit.enable: {clearpath_moveit})'),
+                        f'(moveit:={moveit_arg}, robot.yaml manipulators.moveit.enable: {clearpath_moveit}'
+                        f'{"" if has_arm else ", no arm in robot.yaml: no MoveIt, grid cutter, arm camera filter or gamepad"})'),
             TimerAction(
                 period=moveit_delay_val,
                 actions=[moveit_node_action],
@@ -259,6 +265,7 @@ def launch_setup(context, *args, **kwargs):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(launch_file_cut_stem_gamepad_file),
                 launch_arguments=[('use_sim_time', use_sim_time)],
+                condition=IfCondition(str(has_arm).lower()),
             ),                     
         ],
     )

@@ -107,6 +107,8 @@ def launch_setup(context, *args, **kwargs):
                 name="moveit_sim_bridge",
                 output='screen',
                 namespace=namespace,
+                # nothing to bridge without an arm (bringup_main then starts no MoveIt either)
+                condition=IfCondition(str(bool((config.get('manipulators') or {}).get('arms'))).lower()),
             ),
         ],
     )
