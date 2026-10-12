@@ -27,6 +27,8 @@ from launch_ros.actions import PushRosNamespace, SetParameter, SetRemap, Node
 from nav2_common.launch import RewrittenYaml
 from launch.substitutions import PythonExpression
 
+SIM_STATE = '/generated/fleet/state.json'  # multirobot_sim's ./sim/generated, read-only in the robot containers
+
 ARGUMENTS = [
     # The multirobot_sim robot containers set USE_SIM_TIME=true when the simulator publishes /clock; unset elsewhere.
     DeclareLaunchArgument('use_sim_time', default_value=os.environ.get('USE_SIM_TIME', 'false'),
@@ -134,6 +136,8 @@ def launch_setup(context, *args, **kwargs):
             # Nav2 on a map (bringup_nav2_map.launch.py) is started by bringup_main, as on a real robot
             ('use_nav2', LaunchConfiguration('use_nav2')),
             ('nav2_map', LaunchConfiguration('nav2_map')),
+            # the scene's charging stations as Nav2 docks (the robot container mounts the sim's state.json)
+            ('charger_docks', SIM_STATE if os.path.isfile(SIM_STATE) else ''),
         ],
     )
 

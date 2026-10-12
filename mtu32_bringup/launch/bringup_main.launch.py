@@ -74,6 +74,9 @@ ARGUMENTS = [
                           choices=['true', 'false'],
                           description='Nav2 on a static map (bringup_nav2_map.launch.py, settings per robot from '
                                       'config/nav2_robots.yaml)'),
+    DeclareLaunchArgument('charger_docks', default_value='',
+                          description="Nav2's docks from this charging stations JSON instead of the params file's "
+                                      "(bringup_nav2_map.launch.py; the simulator passes its state.json)"),
     DeclareLaunchArgument('nav2_map', default_value='',
                           description='Map yaml for Nav2, in mtu32_bringup/map or absolute (default: from '
                                       'nav2_robots.yaml)'),
@@ -275,6 +278,7 @@ def launch_setup(context, *args, **kwargs):
             ('setup_path', setup_path),
             ('use_sim_time', use_sim_time),
             ('map', LaunchConfiguration('nav2_map')),
+            ('charger_docks', LaunchConfiguration('charger_docks')),
             ('scan_topic', LaunchConfiguration('scan_topic')),
         ],
         condition=IfCondition(LaunchConfiguration('use_nav2')),

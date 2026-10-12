@@ -14,6 +14,8 @@ map->odom is not published here: as with the a300 launch, the robot's localizati
     ros2 launch mtu32_bringup bringup_nav2_map.launch.py map:=mocap_space1.yaml scan_topic:=sensors/lidar2d_0/scan_filtered
 """
 import copy
+import json
+import math
 import os
 import tempfile
 
@@ -60,6 +62,10 @@ ARGUMENTS = [
     DeclareLaunchArgument('use_respawn', default_value='False',
                           description='Whether to respawn if a node crashes. Applied when composition is disabled.'),
     DeclareLaunchArgument('log_level', default_value='info', description='log level'),
+    DeclareLaunchArgument('charger_docks', default_value='',
+                          description="JSON with the charging stations ({\"chargers\": [{id, x, y, yaw_deg, tag}]}, the "
+                                      "simulator's state.json): the docking server's docks become one per station "
+                                      "(default: the params file's)"),
 ]
 
 
@@ -95,6 +101,39 @@ def resolve_params_file(candidates, platform_model):
             return path
         tried.append(path)
     raise RuntimeError(f'bringup_nav2_map: no Nav2 params file for platform {platform_model!r}, tried {tried}')
+
+
+def charger_docks(params, chargers_file):
+    """Replace the docking server's docks with one per charging station in chargers_file (the simulator's
+    state.json: x, y, yaw_deg = the side its AprilTag faces, tag = the tag's centre, map frame). A dock's pose is
+    where base_link ends up docked: the tag's position moved by the dock plugin's own external_detection_translation
+    (as the docking server places it from a detection), heading into the station. The docks are checked against
+    the battery (use_battery_status): the simulator's battery charges at a station. Returns a log line, or ''."""
+    try:
+        with open(chargers_file) as f:
+            chargers = json.load(f).get('chargers') or []
+    except (OSError, ValueError) as e:
+        return f'bringup_nav2_map: no charger docks ({chargers_file}: {e})'
+    server = (params.get('docking_server') or {}).get('ros__parameters')
+    if not chargers or not server or not server.get('dock_plugins'):
+        return ''
+    dock_type = server['dock_plugins'][0]
+    plugin = server.setdefault(dock_type, {})
+    tx = plugin.get('external_detection_translation_x', 0.0)
+    ty = plugin.get('external_detection_translation_y', 0.0)
+    server.pop('dock_database', None)  # it would win over the docks parameter
+    server['docks'] = []
+    for c in chargers:
+        tag_x, tag_y = (c.get('tag') or [c['x'], c['y']])[:2]
+        yaw = math.radians(c.get('yaw_deg', 0.0)) + math.pi  # facing the tag
+        yaw = math.atan2(math.sin(yaw), math.cos(yaw))
+        x = tag_x + math.cos(yaw) * tx - math.sin(yaw) * ty
+        y = tag_y + math.sin(yaw) * tx + math.cos(yaw) * ty
+        server['docks'].append(c['id'])
+        server[c['id']] = {'type': dock_type, 'frame': 'map', 'pose': [round(x, 3), round(y, 3), round(yaw, 4)]}
+    plugin['use_battery_status'] = True
+    return (f'bringup_nav2_map: docks from {chargers_file}: ' +
+            ', '.join(f"{d} {server[d]['pose']}" for d in server['docks']) + f' ({dock_type}, use_battery_status)')
 
 
 def map_topics(node, fn):
@@ -160,6 +199,7 @@ def launch_setup(context, *args, **kwargs):
                 set_use_sim_time(value)
 
     set_use_sim_time(params)
+    docks_msg = charger_docks(params, arg('charger_docks')) if arg('charger_docks') else ''
     if scan_topic == 'params':
         map_topics(params, lambda topic: in_namespace(topic, namespace))
     else:
@@ -172,6 +212,8 @@ def launch_setup(context, *args, **kwargs):
 
     messages = [LogInfo(msg=f'bringup_nav2_map: {namespace} ({platform_model}) params {params_file}, '
                             f'scan {", ".join(sorted(topics))}, map {map_yaml_file} -> {params_file_out}')]
+    if docks_msg:
+        messages.append(LogInfo(msg=docks_msg))
     for topic in sorted(topics):
         relative_topic = topic.removeprefix(f'/{namespace}/')
         sensor_type = next((t for t in ('lidar2d', 'camera') if relative_topic.startswith(f'sensors/{t}_')), None)
