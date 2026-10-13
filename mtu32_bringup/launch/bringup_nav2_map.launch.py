@@ -103,12 +103,27 @@ def resolve_params_file(candidates, platform_model):
     raise RuntimeError(f'bringup_nav2_map: no Nav2 params file for platform {platform_model!r}, tried {tried}')
 
 
-def charger_docks(params, chargers_file):
+def dock_tag_id(platform_model):
+    """The AprilTag id this platform docks on: its tf2_pose_node's target_frame (config/<platform>/
+    dock_pose_params.yaml, which feeds detected_dock_pose) looked up in config/tags_36h11.yaml. None if unknown."""
+    try:
+        with open(os.path.join(PKG, 'config', platform_model, 'dock_pose_params.yaml')) as f:
+            nodes = next(iter((yaml.safe_load(f) or {}).values()), {})
+        frame = nodes['tf2_pose_node']['ros__parameters']['target_frame']
+        with open(os.path.join(PKG, 'config', 'tags_36h11.yaml')) as f:
+            tags = next(iter((yaml.safe_load(f) or {}).values()), {})['ros__parameters']['tag']
+        return dict(zip(tags['frames'], tags['ids']))[frame]
+    except (OSError, KeyError, TypeError, AttributeError, StopIteration, yaml.YAMLError):
+        return None
+
+
+def charger_docks(params, chargers_file, platform_model):
     """Replace the docking server's docks with one per charging station in chargers_file (the simulator's
     state.json: x, y, yaw_deg = the side its AprilTag faces, tag = the tag's centre, map frame). A dock's pose is
     where base_link ends up docked: the tag's position moved by the dock plugin's own external_detection_translation
     (as the docking server places it from a detection), heading into the station. The docks are checked against
-    the battery (use_battery_status): the simulator's battery charges at a station. Returns a log line, or ''."""
+    the battery (use_battery_status): the simulator's battery charges at a station. Only the stations whose tag
+    this platform detects (dock_tag_id), if known. Returns a log line, or ''."""
     try:
         with open(chargers_file) as f:
             chargers = json.load(f).get('chargers') or []
@@ -117,6 +132,11 @@ def charger_docks(params, chargers_file):
     server = (params.get('docking_server') or {}).get('ros__parameters')
     if not chargers or not server or not server.get('dock_plugins'):
         return ''
+    tag_id = dock_tag_id(platform_model)
+    if tag_id is not None:
+        chargers = [c for c in chargers if c.get('apriltag_id') == tag_id]
+        if not chargers:
+            return f'bringup_nav2_map: no charger in {chargers_file} has tag {tag_id}: keeping the params file\'s docks'
     dock_type = server['dock_plugins'][0]
     plugin = server.setdefault(dock_type, {})
     tx = plugin.get('external_detection_translation_x', 0.0)
@@ -133,7 +153,8 @@ def charger_docks(params, chargers_file):
         server[c['id']] = {'type': dock_type, 'frame': 'map', 'pose': [round(x, 3), round(y, 3), round(yaw, 4)]}
     plugin['use_battery_status'] = True
     return (f'bringup_nav2_map: docks from {chargers_file}: ' +
-            ', '.join(f"{d} {server[d]['pose']}" for d in server['docks']) + f' ({dock_type}, use_battery_status)')
+            ', '.join(f"{d} {server[d]['pose']}" for d in server['docks']) +
+            f' ({dock_type}, use_battery_status{f", tag {tag_id}" if tag_id is not None else ""})')
 
 
 def map_topics(node, fn):
@@ -199,7 +220,7 @@ def launch_setup(context, *args, **kwargs):
                 set_use_sim_time(value)
 
     set_use_sim_time(params)
-    docks_msg = charger_docks(params, arg('charger_docks')) if arg('charger_docks') else ''
+    docks_msg = charger_docks(params, arg('charger_docks'), platform_model) if arg('charger_docks') else ''
     if scan_topic == 'params':
         map_topics(params, lambda topic: in_namespace(topic, namespace))
     else:
