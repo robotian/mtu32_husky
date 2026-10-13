@@ -34,6 +34,20 @@ platforms:
   j100:
     # No 2D lidar: the ZED's depth image through depthimage_to_laserscan.
     scan_topic: sensors/camera_0/scan
+    # Plan and control on the farm map; the camera scan only feeds the collision monitor (stops before anything in
+    # the path). In the lanes (0.74 m between plants, pickup lines 0.13 m off centre) the scan marks the lavender
+    # beside the robot as lethal: the planner then failed between waypoints and a footprint-checking controller
+    # (Graceful, RPP) refused to move. Cost: no planning around an obstacle that isn't on the map (the robot stops
+    # and waits). Tuning report: multirobot_sim docs/nav2_tuning_j100.md.
+    param_overrides:
+      global_costmap:
+        global_costmap:
+          ros__parameters:
+            plugins: [static_layer, inflation_layer]
+      local_costmap:
+        local_costmap:
+          ros__parameters:
+            plugins: [static_layer, inflation_layer]
   a200:
     # a200/nav2.yaml fuses the SICK LMS1xx (lidar2d_0/scan_filtered, self-filtered by bringup_main.launch.py) and the
     # RealSense depth scan (camera_0/scan) in its costmaps; the collision monitor uses the lidar.

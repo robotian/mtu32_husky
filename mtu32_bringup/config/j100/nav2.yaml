@@ -13,6 +13,9 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
+    # Replan only when the path becomes invalid (Nav2's default replans every 3 s; near a goal a DUBIN replan
+    # can only loop): see the file's header.
+    default_nav_through_poses_bt_xml: "$(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml"
     error_code_names:
       - compute_path_error_code
       - follow_path_error_code
@@ -37,98 +40,30 @@ controller_server:
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.15
-      yaw_goal_tolerance: 0.15
+      xy_goal_tolerance: 0.05
+      yaw_goal_tolerance: 0.05
+    # Graceful controller (was MPPI until 2026-10-13; the MPPI block is in git history). Tuned on j100_0921 in the
+    # sim's lavender farm on the coordinator's own routes (multirobot_sim docs/nav2_tuning_j100.md): forward only,
+    # arcs from the DUBIN plan, no spin to start, one slow final turn to the goal heading. Every j100 uses it.
     FollowPath:
-      plugin: "nav2_mppi_controller::MPPIController"
-      time_steps: 72
-      model_dt: 0.05
-      batch_size: 1000
-      ax_max: 2.5
-      ax_min: -2.5
-      ay_max: 3.0
-      az_max: 3.5
-      vx_std: 0.2
-      vy_std: 0.2
-      wz_std: 0.4
-      vx_max: 0.5
-      vx_min: -0.35
-      vy_max: 0.5
-      wz_max: 1.0
-      iteration_count: 1
-      prune_distance: 1.7
+      plugin: "nav2_graceful_controller::GracefulController"
       transform_tolerance: 0.5
-      temperature: 0.3
-      gamma: 0.015
-      motion_model: "DiffDrive"
-      visualize: true
-      regenerate_noises: true
-      TrajectoryVisualizer:
-        trajectory_step: 5
-        time_step: 3
-      AckermannConstraints:
-        min_turning_r: 0.2
-      critics: [
-        "ConstraintCritic", "CostCritic", "GoalCritic",
-        "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
-        "PathAngleCritic", "PreferForwardCritic", "VelocityDeadbandCritic"
-      ]
-      VelocityDeadbandCritic:
-        enabled: false
-        cost_power: 1
-        cost_weight: 5.0
-        deadband_velocities: [0.06, 0.0, 0.05]
-      ConstraintCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 4.0
-      GoalCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 5.0
-        threshold_to_consider: 0.3
-      GoalAngleCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 14.0
-        threshold_to_consider: 0.3 #Only focus on final yaw in this value [meter]
-      PreferForwardCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 14.0
-        threshold_to_consider: 0.5
-      CostCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 3.81
-        critical_cost: 300.0
-        consider_footprint: true   # sometime this can cause issue.
-        collision_cost: 1000000.0
-        near_goal_distance: 1.0
-        trajectory_point_step: 2
-      PathAlignCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 20.0
-        max_path_occupancy_ratio: 0.05
-        trajectory_point_step: 4
-        threshold_to_consider: 0.5
-        offset_from_furthest: 20
-        use_path_orientations: false
-      PathFollowCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 5.0
-        offset_from_furthest: 5
-        threshold_to_consider: 0.1 # Stay on the path until almost touching the goal
-      PathAngleCritic:
-        enabled: true
-        cost_power: 1
-        cost_weight: 2.0
-        offset_from_furthest: 4
-        threshold_to_consider: 0.3
-        max_angle_to_furthest: 1.0
-        mode: 0
+      min_lookahead: 0.25
+      max_lookahead: 1.0          # > slowdown_radius, or the lookahead distance itself caps the cruise speed
+      k_phi: 2.0
+      k_delta: 1.0
+      beta: 0.2                   # curvature slowdown v = v_max / (1 + beta |k|^lambda); 0.4 crawled through U-turns
+      lambda: 2.0
+      v_linear_min: 0.05
+      v_linear_max: 0.5
+      v_angular_max: 1.0
+      v_angular_min_in_place: 0.25  # final turn: the robot keeps turning ~0.3-0.5 s after a stop (sim), so slow
+      slowdown_radius: 0.6
+      initial_rotation: false     # no spin in place to line up with the path (skid steer)
+      prefer_final_rotation: true # approach along the bearing, then one small turn; false missed goals and heading
+      rotation_scaling_factor: 0.5
+      allow_backward: false       # true drove 5 m backwards; the planner (DUBIN) never asks for reverse
+      in_place_collision_resolution: 0.1
 
 local_costmap:
   local_costmap:
@@ -328,8 +263,9 @@ velocity_smoother:
     feedback: "OPEN_LOOP"
     max_velocity: [0.5, 0.0, 1.0]
     min_velocity: [-0.5, 0.0, -1.0]
-    max_accel: [2.5, 0.0, 2.5]
-    max_decel: [-2.5, 0.0, -2.5]
+    # 1 m/s^2 (was 2.5): braking at 2.5 into a tight final turn tipped the sim j100_0921 (arm on top) over twice
+    max_accel: [1.0, 0.0, 2.0]
+    max_decel: [-1.0, 0.0, -2.0]
     odom_topic: "platform/odom/filtered"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
