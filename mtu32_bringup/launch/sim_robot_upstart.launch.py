@@ -63,6 +63,9 @@ ARGUMENTS = [
                           choices=['true', 'false'],
                           description='Nav2 on a static map (bringup_main starts bringup_nav2_map.launch.py, settings '
                                       'per robot from config/nav2_robots.yaml)'),
+    DeclareLaunchArgument('ops_manager', default_value='true', choices=['true', 'false'],
+                          description='start husky_operations_manager, the harvesting operation\'s per-robot '
+                                      'executor (tasks from the base station\'s status_server)'),
     DeclareLaunchArgument('nav2_map', default_value='',
                           description='Map yaml for Nav2, in mtu32_bringup/map or absolute (default: from '
                                       'nav2_robots.yaml)'),
@@ -136,6 +139,7 @@ def launch_setup(context, *args, **kwargs):
             # Nav2 on a map (bringup_nav2_map.launch.py) is started by bringup_main, as on a real robot
             ('use_nav2', LaunchConfiguration('use_nav2')),
             ('nav2_map', LaunchConfiguration('nav2_map')),
+            ('ops_manager', LaunchConfiguration('ops_manager')),
             # the scene's charging stations as Nav2 docks (the robot container mounts the sim's state.json)
             ('charger_docks', SIM_STATE if os.path.isfile(SIM_STATE) else ''),
         ],

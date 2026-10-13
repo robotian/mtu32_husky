@@ -122,7 +122,9 @@ def charger_docks(params, chargers_file, platform_model):
     state.json: x, y, yaw_deg = the side its AprilTag faces, tag = the tag's centre, map frame). A dock's pose is
     where base_link ends up docked: the tag's position moved by the dock plugin's own external_detection_translation
     (as the docking server places it from a detection), heading into the station. The docks are checked against
-    the battery (use_battery_status): the simulator's battery charges at a station. Only the stations whose tag
+    the battery (use_battery_status): the simulator's battery charges at a station. A dock is named by the station's
+    dock_id (dock_station.dock_id, what a charging task's DockGoal.dock_id says) when the database has one, else
+    charger_<n>. Only the stations whose tag
     this platform detects (dock_tag_id), if known. Returns a log line, or ''."""
     try:
         with open(chargers_file) as f:
@@ -149,8 +151,9 @@ def charger_docks(params, chargers_file, platform_model):
         yaw = math.atan2(math.sin(yaw), math.cos(yaw))
         x = tag_x + math.cos(yaw) * tx - math.sin(yaw) * ty
         y = tag_y + math.sin(yaw) * tx + math.cos(yaw) * ty
-        server['docks'].append(c['id'])
-        server[c['id']] = {'type': dock_type, 'frame': 'map', 'pose': [round(x, 3), round(y, 3), round(yaw, 4)]}
+        name = c.get('dock_id') or c['id']  # dock_station.dock_id when the farm database names it, else charger_<n>
+        server['docks'].append(name)
+        server[name] = {'type': dock_type, 'frame': 'map', 'pose': [round(x, 3), round(y, 3), round(yaw, 4)]}
     plugin['use_battery_status'] = True
     return (f'bringup_nav2_map: docks from {chargers_file}: ' +
             ', '.join(f"{d} {server[d]['pose']}" for d in server['docks']) +
@@ -227,9 +230,11 @@ def launch_setup(context, *args, **kwargs):
         map_topics(params, lambda topic: scan_topic)
     topics = set()
     map_topics(params, lambda topic: topics.add(topic) or topic)
-    with tempfile.NamedTemporaryFile('w', prefix=f'{namespace}_', suffix='_nav2_map.yaml', delete=False) as f:
+    # A fixed path, like moveit.launch.py's /tmp/moveit_sim_execution_<ns>.yaml: husky_operations_manager reads the
+    # docking_server block from it (the docks Nav2 really runs with, e.g. the simulator's chargers).
+    params_file_out = os.path.join(tempfile.gettempdir(), f'{namespace}_nav2_map.yaml')
+    with open(params_file_out, 'w') as f:
         yaml.safe_dump(params, f)
-        params_file_out = f.name
 
     messages = [LogInfo(msg=f'bringup_nav2_map: {namespace} ({platform_model}) params {params_file}, '
                             f'scan {", ".join(sorted(topics))}, map {map_yaml_file} -> {params_file_out}')]

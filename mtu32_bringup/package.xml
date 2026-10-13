@@ -14,6 +14,8 @@
   <depend>mocap_fake_localizer</depend>
   <!-- moveit.launch.py (included by bringup_main.launch.py) starts moveit_servo's servo_node -->
   <exec_depend>moveit_servo</exec_depend>
+  <exec_depend>arm_task_server</exec_depend>
+  <exec_depend>husky_operations_manager</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from ament_index_python.packages import get_package_share_directory
 from clearpath_config.common.utils.yaml import read_yaml
@@ -74,6 +75,14 @@ ARGUMENTS = [
                           choices=['true', 'false'],
                           description='Nav2 on a static map (bringup_nav2_map.launch.py, settings per robot from '
                                       'config/nav2_robots.yaml)'),
+    # The harvesting operation's per-robot executor (husky_operations_manager: tasks from the fleet's status_server
+    # on status/task) and the arm action server it drives (arm_task_server, with the arm). The simulator's
+    # upstart starts the executor; a real robot opts in.
+    DeclareLaunchArgument('ops_manager', default_value='false', choices=['true', 'false'],
+                          description='start husky_operations_manager (sim_robot_upstart: true)'),
+    DeclareLaunchArgument('dock_for_charging', default_value='',
+                          description='the dock the executor undocks from after charging when the task does not '
+                                      'say (default: the first dock in the Nav2 params)'),
     DeclareLaunchArgument('charger_docks', default_value='',
                           description="Nav2's docks from this charging stations JSON instead of the params file's "
                                       "(bringup_nav2_map.launch.py; the simulator passes its state.json)"),
@@ -249,6 +258,14 @@ def launch_setup(context, *args, **kwargs):
                 condition=IfCondition(str(has_arm).lower()),
             ),
 
+            # manipulator_action_server: GO STOW / GO READY (move_group named states), START HARVEST (cut_stem)
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(PathJoinSubstitution([
+                    get_package_share_directory('arm_task_server'), 'launch', 'arm_task_server.launch.py'])),
+                launch_arguments=[('setup_path', setup_path), ('use_sim_time', use_sim_time)],
+                condition=IfCondition(str(has_arm).lower()),
+            ),
+
             LogInfo(msg=f'MoveIt: {"starting move_group + servo_node here" if start_moveit else "not started here"} '
                         f'(moveit:={moveit_arg}, robot.yaml manipulators.moveit.enable: {clearpath_moveit}'
                         f'{"" if has_arm else ", no arm in robot.yaml: no MoveIt, grid cutter, arm camera filter or gamepad"})'),
@@ -283,7 +300,19 @@ def launch_setup(context, *args, **kwargs):
         ],
         condition=IfCondition(LaunchConfiguration('use_nav2')),
     )
-    return [load_nodes, nav2]
+    # After Nav2: its launch writes /tmp/<ns>_nav2_map.yaml, where the executor reads the docks from
+    ops_manager = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([
+            get_package_share_directory('husky_operations_manager'), 'launch', 'husky_operations_manager_launch.py'])),
+        launch_arguments=[
+            ('namespace', f'/{namespace}'),
+            ('use_sim_time', use_sim_time),
+            ('nav2_params_file', os.path.join(tempfile.gettempdir(), f'{namespace}_nav2_map.yaml')),
+            ('dock_for_charging', LaunchConfiguration('dock_for_charging')),
+        ],
+        condition=IfCondition(LaunchConfiguration('ops_manager')),
+    )
+    return [load_nodes, nav2, ops_manager]
 
     
 def generate_launch_description():
