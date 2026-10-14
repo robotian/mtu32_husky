@@ -13,9 +13,10 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
-    # Replan only when the path becomes invalid (Nav2's default replans every 3 s; near a goal a DUBIN replan
-    # can only loop): see the file's header.
+    # Replan only when the path becomes invalid (Nav2's defaults replan every 3 s / 1 s; near a goal a DUBIN replan
+    # can only loop): see the files' headers.
     default_nav_through_poses_bt_xml: "$(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml"
+    default_nav_to_pose_bt_xml: "$(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_to_pose_replan_if_invalid.xml"
     error_code_names:
       - compute_path_error_code
       - follow_path_error_code
@@ -58,7 +59,8 @@ controller_server:
       v_linear_max: 0.5
       v_angular_max: 1.0
       v_angular_min_in_place: 0.25  # final turn: the robot keeps turning ~0.3-0.5 s after a stop (sim), so slow
-      slowdown_radius: 0.6
+      slowdown_radius: 1.2        # (2026-10-14) longer approach: single goal poses 5/5 (0.6: 4/5). Measured to the motion
+                                  # target, so with max_lookahead 1.0 it caps cruise at 0.42 m/s (course 353 vs 284 s)
       initial_rotation: false     # no spin in place to line up with the path (skid steer)
       prefer_final_rotation: true # approach along the bearing, then one small turn; false missed goals and heading
       rotation_scaling_factor: 0.5

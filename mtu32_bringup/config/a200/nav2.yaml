@@ -13,9 +13,10 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
-    # Replan only when the path becomes invalid (Nav2's default replans every 3 s; near a goal a DUBIN replan
-    # can only loop): see the file's header.
+    # Replan only when the path becomes invalid (Nav2's defaults replan every 3 s / 1 s; near a goal a DUBIN replan
+    # can only loop): see the files' headers.
     default_nav_through_poses_bt_xml: "$(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml"
+    default_nav_to_pose_bt_xml: "$(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_to_pose_replan_if_invalid.xml"
     error_code_names:
       - compute_path_error_code
       - follow_path_error_code
