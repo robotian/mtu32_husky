@@ -31,6 +31,18 @@ platforms:
   a300:
     # As bringup_nav2_map_a300.launch.py: the RealSense's depth scan, not the Hokuyo on the wireless charger mount.
     scan_topic: sensors/camera_0/scan
+    # Plan and control on the farm map, as the j100 (see there): with the scan in the costmaps the shipped setup
+    # finished 0 of 7 legs (the planner found no path into the first lane). Tuning report: multirobot_sim
+    # docs/nav2_tuning_a300.md.
+    param_overrides:
+      global_costmap:
+        global_costmap:
+          ros__parameters:
+            plugins: [static_layer, inflation_layer]
+      local_costmap:
+        local_costmap:
+          ros__parameters:
+            plugins: [static_layer, inflation_layer]
   j100:
     # No 2D lidar: the ZED's depth image through depthimage_to_laserscan.
     scan_topic: sensors/camera_0/scan
