@@ -9,7 +9,8 @@
 #   scan_topic       One 2D LaserScan for the costmaps' obstacle layers and the collision monitor (replaces every
 #                    `topic:` key of the params file), relative to the robot namespace.
 #                    auto   = sensors/lidar2d_0/scan_filtered if robot.yaml has a lidar2d, else sensors/camera_0/scan
-#                             (depthimage_to_laserscan, started by bringup_main.launch.py).
+#                             (depthimage_to_laserscan, started by bringup_main.launch.py). Obstacle detection looks
+#                             forward: a robot whose lidar doesn't face the front sets the front camera's scan here.
 #                    params = keep the params file's own observation sources (e.g. several scans per layer); only
 #                             their namespace is set to this robot's (/a200_0284/sensors/... -> /<namespace>/sensors/...).
 #   map              Map yaml: a file name in mtu32_bringup's map/ or an absolute path.
@@ -28,45 +29,28 @@ defaults:
   map: zone_end_2.yaml
 
 platforms:
+  # Global costmaps plan on the farm map only: with a scan in them the planner found no path into the lanes (the
+  # lavender beside the robot marked lethal; shipped setups finished 0 of 7 legs on the a300, 2 of 14 on the a200).
+  # The local costmap and the collision monitor see the forward scan (front lidar, else front camera), so the
+  # controller sees obstacles that aren't on the map. Tuning reports: multirobot_sim docs/nav2_tuning_<platform>.md
+  # (tuned map-only; the local obstacle layer is back since 2026-10-14, not re-tuned).
   a300:
-    # As bringup_nav2_map_a300.launch.py: the RealSense's depth scan, not the Hokuyo on the wireless charger mount.
+    # The Hokuyo on the wireless charger mount faces the right side: the front RealSense's depth scan.
     scan_topic: sensors/camera_0/scan
-    # Plan and control on the farm map, as the j100 (see there): with the scan in the costmaps the shipped setup
-    # finished 0 of 7 legs (the planner found no path into the first lane). Tuning report: multirobot_sim
-    # docs/nav2_tuning_a300.md.
     param_overrides:
       global_costmap:
         global_costmap:
-          ros__parameters:
-            plugins: [static_layer, inflation_layer]
-      local_costmap:
-        local_costmap:
           ros__parameters:
             plugins: [static_layer, inflation_layer]
   j100:
-    # No 2D lidar: the ZED's depth image through depthimage_to_laserscan.
-    scan_topic: sensors/camera_0/scan
-    # Plan and control on the farm map; the camera scan only feeds the collision monitor (stops before anything in
-    # the path). In the lanes (0.74 m between plants, pickup lines 0.13 m off centre) the scan marks the lavender
-    # beside the robot as lethal: the planner then failed between waypoints and a footprint-checking controller
-    # (Graceful, RPP) refused to move. Cost: no planning around an obstacle that isn't on the map (the robot stops
-    # and waits). Tuning report: multirobot_sim docs/nav2_tuning_j100.md.
+    # auto: j100_0936's front SICK LMS1xx; j100_0921/0922 (no lidar) the front ZED's depth scan.
     param_overrides:
       global_costmap:
         global_costmap:
-          ros__parameters:
-            plugins: [static_layer, inflation_layer]
-      local_costmap:
-        local_costmap:
           ros__parameters:
             plugins: [static_layer, inflation_layer]
   a200:
-    # a200/nav2.yaml fuses the SICK LMS1xx (lidar2d_0/scan_filtered, self-filtered by bringup_main.launch.py) and the
-    # RealSense depth scan (camera_0/scan); the collision monitor uses the lidar.
-    scan_topic: params
-    # Plan and control on the farm map, as the j100 and a300 (see the j100): with both scans in the costmaps the
-    # shipped setup finished 2 of 14 legs. The lidar still feeds the collision monitor. Tuning report: multirobot_sim
-    # docs/nav2_tuning_a200.md.
+    # auto: a200_0284/0333's front lidar (self-filtered by bringup_main.launch.py), the generic a200 its RealSense.
     param_overrides:
       global_costmap:
         global_costmap:
@@ -75,7 +59,9 @@ platforms:
       local_costmap:
         local_costmap:
           ros__parameters:
-            plugins: [static_layer, inflation_layer]
+            obstacle_layer:
+              # a200/nav2.yaml's second source (low_scan, the camera) would read the same scan again
+              observation_sources: high_scan
 
 robots: {}
   # a300_00036:
