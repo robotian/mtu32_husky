@@ -54,7 +54,7 @@ controller_server:
       k_delta: 1.0
       beta: 0.2                   # curvature slowdown v = v_max / (1 + beta |k|^lambda); 0.4 crawled through U-turns
       lambda: 2.0
-      v_linear_min: 0.05
+      v_linear_min: 0.10          # 0.05 crept to goals on the retuned sim drive (4.4 vs 2.7 cm mean)
       v_linear_max: 0.5
       v_angular_max: 1.0
       v_angular_min_in_place: 0.25  # final turn: the robot keeps turning ~0.3-0.5 s after a stop (sim), so slow
@@ -185,7 +185,7 @@ planner_server:
       analytic_expansion_max_length: 3.0    # For Hybrid/Lattice nodes: The maximum length of the analytic expansion to be considered valid to prevent unsafe shortcutting (in meters). This should be scaled with minimum turning radius and be no less than 4-5x the minimum radius
       analytic_expansion_max_cost: 200.0   # For Hybrid/Lattice nodes: The maximum single cost for any part of an analytic expansion to contain and be valid (except when necessary on approach to goal)
       analytic_expansion_max_cost_override: false # For Hybrid/Lattice nodes: Whether or not to override the maximum cost setting if within critical distance to goal (ie probably required). If expansion is within 2*pi*min_r of the goal, then it will override the max cost if ``false``.
-      minimum_turning_radius: 0.2      # For Hybrid/Lattice nodes: minimum turning radius in m of path / vehicle
+      minimum_turning_radius: 0.4      # 0.2 left a ~110 deg turn right at the Staging goal: the robot swung past it
       reverse_penalty: 2.1                # For Reeds-Shepp model: penalty to apply if motion is reversing, must be => 1
       change_penalty: 0.0                 # For Hybrid nodes: penalty to apply if motion is changing directions, must be >= 0
       non_straight_penalty: 1.20          # For Hybrid nodes: penalty to apply if motion is non-straight, must be => 1
