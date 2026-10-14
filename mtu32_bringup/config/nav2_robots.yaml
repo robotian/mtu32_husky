@@ -62,8 +62,20 @@ platforms:
             plugins: [static_layer, inflation_layer]
   a200:
     # a200/nav2.yaml fuses the SICK LMS1xx (lidar2d_0/scan_filtered, self-filtered by bringup_main.launch.py) and the
-    # RealSense depth scan (camera_0/scan) in its costmaps; the collision monitor uses the lidar.
+    # RealSense depth scan (camera_0/scan); the collision monitor uses the lidar.
     scan_topic: params
+    # Plan and control on the farm map, as the j100 and a300 (see the j100): with both scans in the costmaps the
+    # shipped setup finished 2 of 14 legs. The lidar still feeds the collision monitor. Tuning report: multirobot_sim
+    # docs/nav2_tuning_a200.md.
+    param_overrides:
+      global_costmap:
+        global_costmap:
+          ros__parameters:
+            plugins: [static_layer, inflation_layer]
+      local_costmap:
+        local_costmap:
+          ros__parameters:
+            plugins: [static_layer, inflation_layer]
 
 robots: {}
   # a300_00036:
