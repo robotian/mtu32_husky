@@ -2,6 +2,11 @@
 # A robot without an entry follows the rigid body named after its namespace. Loaded by bringup_main.launch.py
 # after ../ref_localization.yaml and before <namespace>.yaml.
 {
+  "/a200_0284/natnet_ref_pose": {
+    "ros__parameters": {
+      "rigid_body": "Rigid Body 2"
+    }
+  },
   "/a300_00036/natnet_ref_pose": {
     "ros__parameters": {
       "rigid_body": "Rigid Body 1"
