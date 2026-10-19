@@ -1,0 +1,4 @@
+/**/natnet_ref_pose:
+  ros__parameters:
+    rigid_body: Rigid Body 2
+    base_link_offset: [0.2144, -0.21655, 0.00114, -0.00651, -0.00254, 0.95127, 0.30828]
