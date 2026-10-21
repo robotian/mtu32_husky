@@ -1,0 +1,17 @@
+# scripts/dense_scan.py: the front ZED's obstacles by point density (sensors/camera_0/scan_dense), the Nav2 scan of the
+# j100s without a lidar (bringup_nav2_map's scan_topic auto). Measured in the sim's lavender (2026-10-21, j100_0921 on
+# lane 1's centre, the ZED mounted upside down: TF handles it): the soil is at z -0.03 in base_link; at min_area 100 the
+# nearest obstacle beside the robot moves from 0.38 / 0.41 m (every point) to 0.50 / 0.60 m, plant cores kept (as on
+# the a300: config/a300/dense_scan.yaml).
+/**/dense_scan:
+  ros__parameters:
+    rate: 10.0
+    cell: 0.05
+    min_area: 100.0    # cm^2 of surface in a cell's 3x3 neighbourhood
+    z_min: 0.06        # m in base_link (0.064 above the ground): 9 cm above the sim's soil (z -0.03)
+    z_max: 0.90
+    range_min: 0.1
+    range_max: 5.0
+    stride: 2
+    angle_increment_deg: 0.25
+    scan_frame: base_link

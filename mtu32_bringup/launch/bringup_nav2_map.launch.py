@@ -202,7 +202,10 @@ def launch_setup(context, *args, **kwargs):
 
     scan_topic = arg('scan_topic') or profile.get('scan_topic', 'auto')
     if scan_topic == 'auto':
-        scan_topic = 'sensors/lidar2d_0/scan_filtered' if sensors.get('lidar2d') else 'sensors/camera_0/scan'
+        # no lidar: the front camera's scan, by point density where bringup_main runs dense_scan.py for the platform
+        dense = os.path.isfile(os.path.join(PKG, 'config', platform_model, 'dense_scan.yaml'))
+        scan_topic = ('sensors/lidar2d_0/scan_filtered' if sensors.get('lidar2d')
+                      else 'sensors/camera_0/scan_dense' if dense else 'sensors/camera_0/scan')
     if scan_topic != 'params':
         scan_topic = in_namespace(scan_topic, namespace)
 

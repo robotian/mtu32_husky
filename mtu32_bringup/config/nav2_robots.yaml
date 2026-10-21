@@ -63,7 +63,8 @@ platforms:
           ros__parameters:
             plugins: [static_layer, fleet_layer, inflation_layer]
   j100:
-    # auto: j100_0936's front SICK LMS1xx; j100_0921/0922 (no lidar) the front ZED's depth scan.
+    # auto: j100_0936's front SICK LMS1xx; j100_0921/0922 (no lidar) the front ZED's depth scan by point density
+    # (scripts/dense_scan.py, config/j100/dense_scan.yaml: stems brushed, plant cores and solid obstacles kept).
     # Global costmap: also what the scan sees for the last few seconds (scan_layer), so the planner goes round it
     # without keeping it: each update clears around the robot (fleet_obstacles.py's all-clear scan) and marks the
     # scans of the last observation_persistence s, so an obstacle fades 5 s after it leaves the camera's view (a
