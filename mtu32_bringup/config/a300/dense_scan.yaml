@@ -1,12 +1,14 @@
 # scripts/dense_scan.py: the front camera's obstacles by point density (sensors/camera_0/scan_dense), the a300's Nav2
 # scan (nav2_robots.yaml). Measured in the sim's lavender lanes (2026-10-21): stems reaching into the lane 0.6-0.7 cm^2
-# per 5 cm cell, plant bodies 8-10, a solid 5 cm post ~400 over this band. At min_area 50 the nearest obstacle beside a
-# robot on the lane centre moved from 0.31 / 0.47 m (plain scan) to 0.47 / 0.51 m; a j100 2 m ahead stays an obstacle.
+# per 5 cm cell, plant bodies 8-10, a solid 5 cm post ~400 over this band. min_area 100: beside a robot on lane 1's
+# centre the nearest obstacle moves from 0.37 / 0.42 m (every point) to 0.50 / 0.60 m (plant cores kept); at lane 3's
+# entrance on the course line (13 cm off-centre) 0 dense points are left in the robot's path (50: 86, the row right at
+# its edge, and MPPI found no path); a j100 2 m ahead keeps 96 % of its points.
 /**/dense_scan:
   ros__parameters:
     rate: 10.0
     cell: 0.05
-    min_area: 50.0     # cm^2 of surface in a cell's 3x3 neighbourhood
+    min_area: 100.0    # cm^2 of surface in a cell's 3x3 neighbourhood
     z_min: 0.0         # m in base_link (0.165 above the ground): above the soil mounds (~0.07 m in the sim's lanes)
     z_max: 0.85
     range_min: 0.1
