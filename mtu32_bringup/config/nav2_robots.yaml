@@ -62,11 +62,30 @@ platforms:
             plugins: [static_layer, fleet_layer, inflation_layer]
   j100:
     # auto: j100_0936's front SICK LMS1xx; j100_0921/0922 (no lidar) the front ZED's depth scan.
+    # Global costmap: also what the scan sees for the last few seconds (scan_layer), so the planner goes round it
+    # without keeping it: each update clears around the robot (fleet_obstacles.py's all-clear scan) and marks the
+    # scans of the last observation_persistence s, so an obstacle fades 5 s after it leaves the camera's view (a
+    # plain obstacle layer kept everything the forward-only camera stopped seeing). After the map's inflation_layer,
+    # with scan_inflation's 0.3 m: the map keeps 0.8 m (centres the lane paths), scanned lavender gets 0.3 (0.8
+    # closed the 0.74 m lanes).
     param_overrides:
       global_costmap:
         global_costmap:
           ros__parameters:
-            plugins: [static_layer, fleet_layer, inflation_layer]
+            plugins: [static_layer, fleet_layer, inflation_layer, scan_layer, scan_inflation]
+            scan_layer:
+              plugin: nav2_costmap_2d::ObstacleLayer
+              enabled: true
+              footprint_clearing_enabled: false
+              observation_sources: fleet_clear camera
+              fleet_clear: {topic: fleet_obstacles/scan, data_type: LaserScan, clearing: true, marking: false,
+                            raytrace_max_range: 25.0, min_obstacle_height: -1.0, max_obstacle_height: 2.0}
+              camera: {topic: scan, data_type: LaserScan, clearing: false, marking: true, observation_persistence: 5.0,
+                       obstacle_max_range: 2.5, max_obstacle_height: 2.0}  # topic: the robot's scan_topic
+            scan_inflation:
+              plugin: nav2_costmap_2d::InflationLayer
+              cost_scaling_factor: 4.0
+              inflation_radius: 0.3
   a200:
     # auto: a200_0284/0333's front lidar (self-filtered by bringup_main.launch.py), the generic a200 its RealSense.
     param_overrides:
