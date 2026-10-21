@@ -16,6 +16,9 @@ find_package(mocap_fake_localizer REQUIRED)
 install(DIRECTORY config launch map
   DESTINATION share/${PROJECT_NAME}
 )
+install(PROGRAMS scripts/fleet_obstacles.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

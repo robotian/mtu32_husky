@@ -227,7 +227,9 @@ def launch_setup(context, *args, **kwargs):
     if scan_topic == 'params':
         map_topics(params, lambda topic: in_namespace(topic, namespace))
     else:
-        map_topics(params, lambda topic: scan_topic)
+        # fleet_obstacles.py's topics (the global costmap's fleet_layer) aren't the scan
+        map_topics(params, lambda topic: in_namespace(topic, namespace) if topic.startswith('fleet_obstacles/')
+                   else scan_topic)
     topics = set()
     map_topics(params, lambda topic: topics.add(topic) or topic)
     # A fixed path, like moveit.launch.py's /tmp/moveit_sim_execution_<ns>.yaml: husky_operations_manager reads the
@@ -305,6 +307,14 @@ def launch_setup(context, *args, **kwargs):
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(mtu_launch_dir, 'navigation.launch.py')),
             launch_arguments=nav2_args.items(),
+        ),
+        # the other robots' footprints for the global costmap's fleet_layer (config/nav2_robots.yaml)
+        Node(
+            package='mtu32_bringup',
+            executable='fleet_obstacles.py',
+            name='fleet_obstacles',
+            output='screen',
+            parameters=[{'use_sim_time': arg('use_sim_time') == 'true'}],
         ),
     ])
 
