@@ -132,6 +132,8 @@ def launch_setup(context, *args, **kwargs):
     depth2scan_param_config = os.path.join(
         pkg_mtu32_bringup, 'config', f'{platform_model}', 'depth2scan.yaml'
     )
+    # the camera's obstacles by point density (scripts/dense_scan.py), for the platforms whose Nav2 uses it
+    dense_scan_config = os.path.join(pkg_mtu32_bringup, 'config', f'{platform_model}', 'dense_scan.yaml')
 
     aprilTag_config = os.path.join(
         pkg_mtu32_bringup, 'config', 'tags_36h11.yaml'
@@ -216,7 +218,21 @@ def launch_setup(context, *args, **kwargs):
                     ('scan', f'/{namespace}/sensors/camera_0/scan')
                 ],
                 parameters=[depth2scan_param_config]
-            ),  
+            ),
+
+            Node(
+                package='mtu32_bringup',
+                executable='dense_scan.py',
+                name='dense_scan',
+                namespace=f'/{namespace}',
+                remappings=remappings_tf + [
+                    ('depth', f'/{namespace}/sensors/camera_0/depth/image'),
+                    ('depth_camera_info', f'/{namespace}/sensors/camera_0/depth/camera_info'),
+                    ('scan', f'/{namespace}/sensors/camera_0/scan_dense')
+                ],
+                parameters=[dense_scan_config],
+                condition=IfCondition(str(os.path.isfile(dense_scan_config)).lower()),
+            ),
 
             Node(
                 package='apriltag_ros',

@@ -16,7 +16,7 @@ find_package(mocap_fake_localizer REQUIRED)
 install(DIRECTORY config launch map
   DESTINATION share/${PROJECT_NAME}
 )
-install(PROGRAMS scripts/fleet_obstacles.py
+install(PROGRAMS scripts/fleet_obstacles.py scripts/dense_scan.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

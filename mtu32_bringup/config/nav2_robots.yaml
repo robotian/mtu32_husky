@@ -53,8 +53,10 @@ platforms:
   # controller sees obstacles that aren't on the map. Tuning reports: multirobot_sim docs/nav2_tuning_<platform>.md
   # (tuned map-only; the local obstacle layer is back since 2026-10-14, not re-tuned).
   a300:
-    # The Hokuyo on the wireless charger mount faces the right side: the front RealSense's depth scan.
-    scan_topic: sensors/camera_0/scan
+    # The Hokuyo on the wireless charger mount faces the right side: the front RealSense's depth scan, by point
+    # density (scripts/dense_scan.py): the plain scan is the tips of the lavender stems reaching into the lane, so
+    # the 0.70 m-wide robot saw 0.67-0.77 m lanes as blocked and MPPI stopped short of every off-centre goal.
+    scan_topic: sensors/camera_0/scan_dense
     param_overrides:
       global_costmap:
         global_costmap:
