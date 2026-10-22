@@ -29,6 +29,10 @@ from launch_ros.descriptions import ComposableNode, ParameterFile
 from nav2_common.launch import RewrittenYaml
 
 
+# Nav2's 4 s bond timeout reset (or aborted the bring-up of) every server whenever a heartbeat came late: a stack's
+# start keeps the shared zenoh router busy for 30-90 s (2026-10-21). A crashed server is still caught, 20 s later.
+BOND_TIMEOUT = 20.0
+
 def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('nav2_bringup')
@@ -166,7 +170,7 @@ def generate_launch_description():
                 name='lifecycle_manager_localization',
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
-                parameters=[{'autostart': autostart}, {'node_names': lifecycle_nodes}],
+                parameters=[{'autostart': autostart}, {'node_names': lifecycle_nodes}, {'bond_timeout': BOND_TIMEOUT}],
             ),
         ],
     )
@@ -227,7 +231,7 @@ def generate_launch_description():
                         plugin='nav2_lifecycle_manager::LifecycleManager',
                         name='lifecycle_manager_localization',
                         parameters=[
-                            {'autostart': autostart, 'node_names': lifecycle_nodes}
+                            {'autostart': autostart, 'node_names': lifecycle_nodes, 'bond_timeout': BOND_TIMEOUT}
                         ],
                     ),
                 ],
