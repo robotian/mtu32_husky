@@ -150,6 +150,10 @@ def launch_setup(context, *args, **kwargs):
             executable='move_group',
             output='log',
             namespace=namespace,
+            # MoveIt 2.12.4 segfaulted when two goals met at its start (j100_0921, 2026-10-21): without a respawn
+            # every later arm goal failed until the whole stack was relaunched
+            respawn=True,
+            respawn_delay=2.0,
             parameters=[
                 moveit_yaml,
                 *sim_execution,
