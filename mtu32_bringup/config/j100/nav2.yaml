@@ -55,10 +55,10 @@ controller_server:
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
-      vx_max: 0.6
+      vx_max: 0.5  # was 0.6 (2026-10-27, with wz_max 1.0: lane entry and turn-arounds)
       vx_min: 0.0
       vy_max: 0.5
-      wz_max: 0.5
+      wz_max: 1.0  # was 0.5: tightest turn 1.2 m at 0.6 m/s, the lane entry needs ~0.5 m
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
@@ -67,6 +67,10 @@ controller_server:
       motion_model: "DiffDrive"
       visualize: false
       regenerate_noises: true
+      # Start each optimization from the last command, not the measured speed (platform/odom/filtered lags
+      # ~50-140 ms in the sim): closed loop, MPPI raised its command only ~0.05 m/s per s, overshot goals and
+      # weaved (farm course 0/7 on 2026-10-27; 7/7 with this, 3 cm, 0 recoveries). docs/nav2_tuning_j100.md
+      open_loop: true
       TrajectoryVisualizer:
         trajectory_step: 5
         time_step: 3
