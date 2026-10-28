@@ -71,6 +71,10 @@ controller_server:
       motion_model: "DiffDrive"
       visualize: false
       regenerate_noises: true
+      # Start each optimization from the last command, not the measured speed (the EKF odometry lags ~50-140 ms
+      # in the sim). Closed loop: farm course 0/7 on 2026-10-28; with this 7/7, 5 cm, 0 recoveries. As on the
+      # j100 and a300 (docs/nav2_tuning_a200.md)
+      open_loop: true
       TrajectoryVisualizer:
         trajectory_step: 5
         time_step: 3
