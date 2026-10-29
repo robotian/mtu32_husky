@@ -1,7 +1,7 @@
 /**:
   tf2_pose_node:
     ros__parameters:
-      target_frame: "husky_charger_april"
+      target_frame: "a200_charger_april"
       output_frame: "odom"
       output_pose_topic: "detected_dock_pose"
       timeout: 0.1
