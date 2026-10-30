@@ -36,6 +36,114 @@
     <origin xyz="-0.048 0.0 -0.003" rpy="1.5708 -1.5708 -1.5708"/>
 </xacro:intel_realsense>
 
+<!-- Cutter + gripper end effector (replaces the 2F Lite's fingers; their links stay, MoveIt and the arm driver
+     command its finger joint). Visual: the EE's static parts (sim/scripts/make_ee_cutter_urdf_mesh.py; the moving ones
+     follow below). Collision: its envelope as boxes from the STEP (cutter_and_gripper_and_camera_bracket
+     .stp, CAD frame: x -> y, y -> z, z -> x, +2.2 mm in z) for MoveIt; finger_sweep covers the finger tip's whole
+     travel, the jaw opening is filled (MoveIt sees no stems). -->
+<link name="ee_cutter_link">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry><mesh filename="package://mtu32_description/meshes/ee_cutter.obj"/></geometry>
+  </visual>
+  <collision name="housing">
+    <origin xyz="0.0340 -0.0040 0.0692" rpy="0 0 0"/>
+    <geometry><box size="0.0360 0.1460 0.1340"/></geometry>
+  </collision>
+  <collision name="housing_rear">
+    <origin xyz="0.0410 -0.0040 -0.0118" rpy="0 0 0"/>
+    <geometry><box size="0.0160 0.1460 0.0280"/></geometry>
+  </collision>
+  <collision name="dynamixel">
+    <origin xyz="0.0635 -0.0050 0.0687" rpy="0 0 0"/>
+    <geometry><box size="0.0230 0.0480 0.0550"/></geometry>
+  </collision>
+  <collision name="blades">
+    <origin xyz="0.0350 0.0025 0.1547" rpy="0 0 0"/>
+    <geometry><box size="0.0140 0.1250 0.0370"/></geometry>
+  </collision>
+  <collision name="jaw_linkage">
+    <origin xyz="0.0000 -0.0230 0.0892" rpy="0 0 0"/>
+    <geometry><box size="0.0260 0.1220 0.1340"/></geometry>
+  </collision>
+  <collision name="finger_sweep">
+    <origin xyz="0.0070 -0.0185 0.1892" rpy="0 0 0"/>
+    <geometry><box size="0.0300 0.0970 0.0660"/></geometry>
+  </collision>
+  <collision name="fixtures">
+    <origin xyz="0.0000 0.0000 0.0202" rpy="0 0 0"/>
+    <geometry><box size="0.0720 0.0800 0.0360"/></geometry>
+  </collision>
+  <collision name="d405_bracket">
+    <origin xyz="-0.0470 0.0000 0.0102" rpy="0 0 0"/>
+    <geometry><box size="0.0220 0.0490 0.0500"/></geometry>
+  </collision>
+</link>
+<joint name="ee_cutter_joint" type="fixed">
+  <parent link="arm_0_gripper_gripper_base_link"/>
+  <child link="ee_cutter_link"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+</joint>
+<!-- The EE's moving bodies (sim/scripts/ee_cutter.py BODIES), each at its CAD pivot: fixed here (a real robot
+     publishes no state for them, and MoveIt would wait for one); the sim's robot_state makes them prismatic /
+     revolute (axis z / x) in the published robot_description, and they follow the sim's platform/joint_states. -->
+<link name="ee_cutter_slide_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_slide.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_slide_joint" type="fixed">
+  <parent link="ee_cutter_link"/>
+  <child link="ee_cutter_slide_link"/>
+  <origin xyz="0.00000 0.00000 0.00220" rpy="0 0 0"/>
+</joint>
+<link name="ee_cutter_pusher_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_pusher.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_pusher_joint" type="fixed">
+  <parent link="ee_cutter_slide_link"/>
+  <child link="ee_cutter_pusher_link"/>
+  <origin xyz="0.00000 -0.05103 0.05555" rpy="0 0 0"/>
+</joint>
+<link name="ee_cutter_link_1_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_link_1.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_link_1_joint" type="fixed">
+  <parent link="ee_cutter_link"/>
+  <child link="ee_cutter_link_1_link"/>
+  <origin xyz="0.00000 -0.04443 0.11000" rpy="0 0 0"/>
+</joint>
+<link name="ee_cutter_link_2_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_link_2.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_link_2_joint" type="fixed">
+  <parent link="ee_cutter_link_1_link"/>
+  <child link="ee_cutter_link_2_link"/>
+  <origin xyz="0.00000 -0.03300 -0.02259" rpy="0 0 0"/>
+</joint>
+<link name="ee_cutter_finger_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_finger.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_finger_joint" type="fixed">
+  <parent link="ee_cutter_link"/>
+  <child link="ee_cutter_finger_link"/>
+  <origin xyz="0.00000 -0.04448 0.15000" rpy="0 0 0"/>
+</joint>
+<link name="ee_cutter_blade_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_blade.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_blade_joint" type="fixed">
+  <parent link="ee_cutter_link"/>
+  <child link="ee_cutter_blade_link"/>
+  <origin xyz="0.00000 0.00593 0.10824" rpy="0 0 0"/>
+</joint>
+<link name="ee_cutter_spur_link">
+  <visual><geometry><mesh filename="package://mtu32_description/meshes/ee_cutter_spur.obj"/></geometry></visual>
+</link>
+<joint name="ee_cutter_spur_joint" type="fixed">
+  <parent link="ee_cutter_link"/>
+  <child link="ee_cutter_spur_link"/>
+  <origin xyz="0.00000 0.00085 0.05800" rpy="0 0 0"/>
+</joint>
+
 
 
 </robot>

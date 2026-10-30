@@ -34,6 +34,7 @@
 import os
 import tempfile
 import xacro
+import xml.etree.ElementTree as ET
 import yaml
 
 from launch import LaunchDescription
@@ -64,11 +65,19 @@ def launch_setup(context, *args, **kwargs):
     }
 
     # Semantic Robot Description
-    robot_description_semantic = {
-        'robot_description_semantic': xacro.process_file(
-            os.path.join(setup_path_context, 'robot.srdf')
-        ).toxml()
-    }
+    srdf = xacro.process_file(os.path.join(setup_path_context, 'robot.srdf'))
+    # The cutter EE (mtu32_description's ee_cutter_link) replaces the 2F Lite's fingers, whose links stay
+    # in the model inside its jaw: never check them against it. The generated SRDF disables only the pairs its random
+    # samples saw touching (j100_0921, 2026-10-30: left_finger_dist was missed, and Servo stopped every cut).
+    urdf_links = {link.get('name') for link in ET.fromstring(robot_description['robot_description']).iter('link')}
+    if 'ee_cutter_link' in urdf_links:
+        for finger in sorted(n for n in urdf_links if n.startswith('arm_0_gripper_') and '_finger_' in n):
+            pair = srdf.createElement('disable_collisions')
+            pair.setAttribute('link1', 'ee_cutter_link')
+            pair.setAttribute('link2', finger)
+            pair.setAttribute('reason', 'Never')
+            srdf.documentElement.appendChild(pair)
+    robot_description_semantic = {'robot_description_semantic': srdf.toxml()}
 
     # MoveIt Configuration
     # The generated moveit.yaml is scoped to <namespace>/move_group, so the servo
