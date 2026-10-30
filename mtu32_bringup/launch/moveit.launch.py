@@ -146,12 +146,15 @@ def launch_setup(context, *args, **kwargs):
     # bridge's settle_timeout leaves the decision to the bridge. Real robots keep the generated values.
     # A file scoped like moveit.yaml (<namespace>/move_group): a parameters dict goes to a `/**` file, and rcl lets
     # moveit.yaml's node-specific value win over that whatever the order.
-    sim_execution = []
+    # Every robot: OMPL's default collision-check spacing (0.5 % of the joint space's extent) let paths through the
+    # 2 cm basket walls with the cutter EE; MoveIt's own validation then rejected them, and a drop failed all 3
+    # attempts (j100_0921, 2026-10-30).
+    overrides = {'ompl': {'arm_0': {'longest_valid_segment_fraction': 0.0005}}}
     if use_sim_time.perform(context).lower() == 'true':
-        sim_execution = [os.path.join(tempfile.gettempdir(), f'moveit_sim_execution_{namespace}.yaml')]
-        with open(sim_execution[0], 'w') as f:
-            yaml.safe_dump({namespace: {'move_group': {'ros__parameters': {
-                'trajectory_execution': {'allowed_goal_duration_margin': 12.0}}}}}, f)
+        overrides['trajectory_execution'] = {'allowed_goal_duration_margin': 12.0}
+    sim_execution = [os.path.join(tempfile.gettempdir(), f'moveit_overrides_{namespace}.yaml')]
+    with open(sim_execution[0], 'w') as f:
+        yaml.safe_dump({namespace: {'move_group': {'ros__parameters': overrides}}}, f)
 
     return [
         Node(
